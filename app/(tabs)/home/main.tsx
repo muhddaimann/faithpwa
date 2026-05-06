@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { View, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Button, Card, useTheme, Divider, Checkbox, Icon } from "react-native-paper";
+import { Text, Button, Card, useTheme, Divider, Icon } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
+import { useLoader } from "../../../contexts/loaderContext";
 import Header from "../../../components/header";
 
 const DAYS = [
@@ -21,6 +22,7 @@ export default function Main() {
   const tokens = useDesign();
   const { setHideTabBar } = useTabs();
   const { alert, confirm, toast, showModal, hideModal } = useOverlay();
+  const { showLoader, hideLoader } = useLoader();
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
 
   useEffect(() => {
@@ -62,13 +64,16 @@ export default function Main() {
     });
   };
 
-  // Re-triggering the modal with updated state to simulate a live picker
-  // In a real app, you might use a separate component for the modal content
-  useEffect(() => {
-    // This is just to make the demo feel interactive if the modal is already open
-    // However, showModal normally takes a snapshot. For a real picker, 
-    // a dedicated Picker component inside the modal would be better.
-  }, [selectedDays]);
+  const handleLoader = () => {
+    showLoader("Processing your request...");
+    setTimeout(() => {
+      hideLoader();
+      toast({
+        message: "Loading complete!",
+        variant: "success",
+      });
+    }, 2000);
+  };
 
   const handleModal = () => {
     showModal({
@@ -84,9 +89,6 @@ export default function Main() {
               <TouchableOpacity 
                 key={day} 
                 onPress={() => {
-                  // In this demo, we'll just show the UI. 
-                  // Real state updates would need the modal content to be its own component
-                  // to avoid closing/reopening, but for a demo we'll keep it simple.
                   toggleDay(day);
                   toast(`Selected ${day}`);
                 }}
@@ -192,6 +194,18 @@ export default function Main() {
               </Text>
               <Button mode="outlined" onPress={handleModal}>
                 Show Modal
+              </Button>
+            </View>
+
+            <Divider />
+
+            <View>
+              <Text variant="titleMedium">Full Screen Loader</Text>
+              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+                Blocks UI interaction during long operations.
+              </Text>
+              <Button mode="outlined" onPress={handleLoader}>
+                Simulate 2s Loading
               </Button>
             </View>
           </View>
