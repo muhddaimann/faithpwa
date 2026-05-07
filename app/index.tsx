@@ -1,14 +1,26 @@
-import React, { useState } from 'react';
-import { View } from 'react-native';
-import { Text, TextInput, Button, Card, useTheme, ActivityIndicator } from 'react-native-paper';
-import { router } from 'expo-router';
-import { useDesign } from '../contexts/designContext';
-import { useAuth } from '../contexts/authContext';
-import { KeyboardLayout } from '../components/keyboardLayout';
+import React, { useState } from "react";
+import {
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  TouchableWithoutFeedback,
+  Keyboard,
+} from "react-native";
+import {
+  Text,
+  TextInput,
+  Button,
+  Card,
+  useTheme,
+  ActivityIndicator,
+} from "react-native-paper";
+import { router } from "expo-router";
+import { useDesign } from "../contexts/designContext";
+import { useAuth } from "../contexts/authContext";
 
 export default function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
   const theme = useTheme();
   const tokens = useDesign();
@@ -16,101 +28,115 @@ export default function Login() {
 
   React.useEffect(() => {
     if (!isLoading && user) {
-      router.replace('/welcome');
+      router.replace("/welcome");
     }
   }, [user, isLoading]);
 
   const handleLogin = async () => {
     const success = await signIn(username.trim(), password);
+
     if (success) {
-      router.replace('/welcome');
+      router.replace("/welcome");
     }
   };
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: theme.colors.background }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: theme.colors.background,
+        }}
+      >
         <ActivityIndicator size="large" />
       </View>
     );
   }
 
   return (
-    <KeyboardLayout
-      style={{
-        justifyContent: 'center',
-        paddingHorizontal: tokens.spacing.xl,
-      }}
-    >
-      <Card
-        mode="elevated"
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{
-          backgroundColor: theme.colors.surface,
-          padding: tokens.spacing.xl,
-          borderRadius: tokens.radii.xl,
-          elevation: 4,
+          flex: 1,
+          justifyContent: "center",
+          paddingHorizontal: tokens.spacing.xl,
+          backgroundColor: theme.colors.background,
         }}
       >
-        <View style={{ marginBottom: tokens.spacing.xl }}>
-          <Text
-            variant="headlineMedium"
-            style={{
-              fontWeight: '700',
-              textAlign: 'center',
-              marginBottom: tokens.spacing.xs,
-            }}
-          >
-            Welcome Back
-          </Text>
-          <Text
-            variant="bodyMedium"
-            style={{
-              textAlign: 'center',
-              opacity: 0.6,
-            }}
-          >
-            Sign in to continue
-          </Text>
-        </View>
-
-        <TextInput
-          label="Username"
-          mode="outlined"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-          left={<TextInput.Icon icon="account-outline" />}
-          returnKeyType="next"
-        />
-
-        <TextInput
-          label="Password"
-          mode="outlined"
-          value={password}
-          onChangeText={setPassword}
-          secureTextEntry
-          style={{ marginTop: tokens.spacing.md }}
-          left={<TextInput.Icon icon="lock-outline" />}
-          returnKeyType="done"
-          onSubmitEditing={handleLogin}
-        />
-
-        <View style={{ height: tokens.spacing.md }} />
-
-        <Button
-          mode="contained"
-          onPress={handleLogin}
+        <Card
+          mode="elevated"
           style={{
-            borderRadius: tokens.radii.lg,
-            paddingVertical: 4,
+            backgroundColor: theme.colors.surface,
+            padding: tokens.spacing.xl,
+            borderRadius: tokens.radii.xl,
+            elevation: 4,
           }}
-          contentStyle={{ paddingVertical: 6 }}
-          disabled={!username || !password}
         >
-          Login
-        </Button>
-      </Card>
-    </KeyboardLayout>
+          <View style={{ marginBottom: tokens.spacing.xl }}>
+            <Text
+              variant="headlineMedium"
+              style={{
+                fontWeight: "700",
+                textAlign: "center",
+                marginBottom: tokens.spacing.xs,
+              }}
+            >
+              Welcome Back
+            </Text>
+
+            <Text
+              variant="bodyMedium"
+              style={{
+                textAlign: "center",
+                opacity: 0.6,
+              }}
+            >
+              Sign in to continue
+            </Text>
+          </View>
+
+          <TextInput
+            label="Username"
+            mode="outlined"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            autoCorrect={false}
+            left={<TextInput.Icon icon="account-outline" />}
+            returnKeyType="next"
+          />
+
+          <TextInput
+            label="Password"
+            mode="outlined"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            style={{ marginTop: tokens.spacing.md }}
+            left={<TextInput.Icon icon="lock-outline" />}
+            returnKeyType="done"
+            onSubmitEditing={handleLogin}
+          />
+
+          <View style={{ height: tokens.spacing.md }} />
+
+          <Button
+            mode="contained"
+            onPress={handleLogin}
+            style={{
+              borderRadius: tokens.radii.lg,
+              paddingVertical: 4,
+            }}
+            contentStyle={{ paddingVertical: 6 }}
+            disabled={!username || !password}
+          >
+            Login
+          </Button>
+        </Card>
+      </KeyboardAvoidingView>
+    </TouchableWithoutFeedback>
   );
 }

@@ -1,9 +1,9 @@
 {
   "expo": {
-    "name": "fah",
-    "slug": "fah",
+    "name": "Dummy",
+    "slug": "dummy",
     "version": "1.0.0",
-    "scheme": "fah",
+    "scheme": "dummy",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
