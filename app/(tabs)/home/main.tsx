@@ -38,7 +38,6 @@ export default function Main() {
 
   const handleRefresh = async () => {
     await performRefresh(async () => {
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 2000));
       toast({
         message: "All data synchronized!",
