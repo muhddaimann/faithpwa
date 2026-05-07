@@ -46,7 +46,7 @@ export function OverlayConfirm({
       Animated.spring(animatedValue, {
         toValue: 1,
         tension: 65,
-        friction: 7,
+        friction: 8,
         useNativeDriver: true,
       }).start();
     }
@@ -74,8 +74,13 @@ export function OverlayConfirm({
 
   const contentTranslateY = animatedValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [30, 0],
+    outputRange: [20, 0],
   });
+
+  const accentColor = isDestructive ? theme.colors.error : theme.colors.primary;
+  const containerColor = isDestructive
+    ? theme.colors.errorContainer
+    : theme.colors.primaryContainer;
 
   return (
     <Portal>
@@ -119,7 +124,6 @@ export function OverlayConfirm({
           }}
         >
           <Surface
-            elevation={0}
             style={{
               backgroundColor: theme.colors.surface,
               borderRadius: tokens.radii["2xl"],
@@ -128,134 +132,133 @@ export function OverlayConfirm({
                   shadowColor: "#000",
                   shadowOpacity: 0.15,
                   shadowRadius: 24,
-                  shadowOffset: {
-                    width: 0,
-                    height: 12,
-                  },
-                },
-                android: {
-                  elevation: 0,
+                  shadowOffset: { width: 0, height: 12 },
                 },
               }),
             }}
           >
             <View
               style={{
-                padding: tokens.spacing.xl,
-                gap: tokens.spacing.lg,
-                alignItems: "center",
-                overflow: "hidden",
                 borderRadius: tokens.radii["2xl"],
+                overflow: "hidden",
               }}
             >
               <View
                 style={{
-                  marginBottom: tokens.spacing.xs,
+                  paddingTop: tokens.spacing.lg,
+                  paddingBottom: tokens.spacing.md,
+                  paddingHorizontal: tokens.spacing.md,
+                  gap: tokens.spacing.md,
+                  alignItems: "center",
                 }}
               >
                 <View
                   style={{
-                    width: 72,
-                    height: 72,
-                    borderRadius: 36,
+                    width: 80,
+                    height: 80,
+                    borderRadius: 40,
                     justifyContent: "center",
                     alignItems: "center",
-                    backgroundColor: isDestructive
-                      ? theme.colors.errorContainer
-                      : theme.colors.secondaryContainer,
+                    backgroundColor: containerColor,
+                    borderWidth: 4,
+                    borderColor: theme.colors.surface,
                   }}
                 >
                   <Icon
                     source={
                       isDestructive ? "alert-outline" : "help-circle-outline"
                     }
-                    size={32}
-                    color={
-                      isDestructive
-                        ? theme.colors.error
-                        : theme.colors.secondary
-                    }
+                    size={36}
+                    color={accentColor}
                   />
+                </View>
+
+                <View
+                  style={{
+                    width: "100%",
+                    alignItems: "center",
+                    gap: tokens.spacing.xs,
+                  }}
+                >
+                  {title && (
+                    <Text
+                      variant="headlineSmall"
+                      style={{
+                        fontWeight: "bold",
+                        textAlign: "center",
+                        color: theme.colors.onSurface,
+                      }}
+                    >
+                      {title}
+                    </Text>
+                  )}
+
+                  {message && (
+                    <Text
+                      variant="bodyMedium"
+                      style={{
+                        textAlign: "center",
+                        lineHeight: 22,
+                        color: theme.colors.onSurfaceVariant,
+                      }}
+                    >
+                      {message}
+                    </Text>
+                  )}
+                </View>
+
+                <View
+                  style={{
+                    width: "100%",
+                    gap: tokens.spacing.xs,
+                  }}
+                >
+                  <Button
+                    mode="contained"
+                    onPress={() => hide(onConfirm)}
+                    buttonColor={accentColor}
+                    textColor={
+                      isDestructive
+                        ? theme.colors.onError
+                        : theme.colors.onPrimary
+                    }
+                    style={{
+                      width: "100%",
+                      borderRadius: tokens.radii.pill,
+                    }}
+                    contentStyle={{
+                      paddingVertical: tokens.spacing.xs,
+                    }}
+                  >
+                    {confirmText}
+                  </Button>
+
+                  <Button
+                    mode="text"
+                    onPress={() => hide(onCancel)}
+                    textColor={theme.colors.onSurfaceVariant}
+                    style={{
+                      width: "100%",
+                      borderRadius: tokens.radii.pill,
+                    }}
+                    contentStyle={{
+                      paddingVertical: tokens.spacing.xs,
+                    }}
+                  >
+                    {cancelText}
+                  </Button>
                 </View>
               </View>
 
+              {/* Accent Indicator */}
               <View
                 style={{
+                  height: 4,
                   width: "100%",
-                  alignItems: "center",
-                  gap: tokens.spacing.sm,
+                  backgroundColor: accentColor,
+                  opacity: 0.8,
                 }}
-              >
-                {title && (
-                  <Text
-                    variant="headlineSmall"
-                    style={{
-                      fontWeight: "bold",
-                      textAlign: "center",
-                      color: theme.colors.onSurface,
-                    }}
-                  >
-                    {title}
-                  </Text>
-                )}
-
-                {message && (
-                  <Text
-                    variant="bodyMedium"
-                    style={{
-                      textAlign: "center",
-                      lineHeight: 22,
-                      color: theme.colors.onSurfaceVariant,
-                    }}
-                  >
-                    {message}
-                  </Text>
-                )}
-              </View>
-
-              <View
-                style={{
-                  width: "100%",
-                  gap: tokens.spacing.xs,
-                }}
-              >
-                <Button
-                  mode="contained"
-                  onPress={() => hide(onConfirm)}
-                  buttonColor={
-                    isDestructive ? theme.colors.error : theme.colors.primary
-                  }
-                  textColor={
-                    isDestructive
-                      ? theme.colors.onError
-                      : theme.colors.onPrimary
-                  }
-                  style={{
-                    width: "100%",
-                    borderRadius: tokens.radii.pill,
-                  }}
-                  contentStyle={{
-                    paddingVertical: tokens.spacing.xs,
-                  }}
-                >
-                  {confirmText}
-                </Button>
-
-                <Button
-                  mode="text"
-                  onPress={() => hide(onCancel)}
-                  textColor={theme.colors.onSurfaceVariant}
-                  style={{
-                    width: "100%",
-                    borderRadius: tokens.radii.pill,
-                  }}
-                  contentStyle={{
-                    paddingVertical: tokens.spacing.xs,
-                  }}
-                >
-                  {cancelText}
-                </Button>
-              </View>
+              />
             </View>
           </Surface>
         </Animated.View>

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, View, TouchableOpacity } from "react-native";
+import { Animated, View, TouchableOpacity, Easing, Platform } from "react-native";
 import { Surface, Text, useTheme, Icon, Portal } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../contexts/designContext";
@@ -9,8 +9,6 @@ export type ToastVariant = "default" | "success" | "error" | "warning" | "info";
 type Props = {
   visible: boolean;
   message: string;
-  actionLabel?: string;
-  onAction?: () => void;
   onDismiss: () => void;
   duration?: number;
   variant?: ToastVariant;
@@ -20,8 +18,6 @@ type Props = {
 export function OverlayToast({
   visible,
   message,
-  actionLabel,
-  onAction,
   onDismiss,
   duration = 3000,
   variant = "default",
@@ -33,48 +29,52 @@ export function OverlayToast({
 
   const translateY = useRef(new Animated.Value(-100)).current;
   const opacity = useRef(new Animated.Value(0)).current;
+  const progress = useRef(new Animated.Value(0)).current;
 
   const variantConfig = {
     default: {
-      bg: theme.colors.inverseSurface,
-      text: theme.colors.inverseOnSurface,
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.onSurfaceVariant,
       icon: icon ?? "information",
-      action: theme.colors.inversePrimary,
+      accent: theme.colors.onSurfaceVariant,
     },
     success: {
-      bg: theme.colors.tertiary,
-      text: theme.colors.onTertiary,
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.onSurface,
       icon: icon ?? "check-circle",
-      action: theme.colors.onTertiary,
+      accent: theme.colors.tertiary,
     },
     error: {
-      bg: theme.colors.error,
-      text: theme.colors.onError,
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.onSurface,
       icon: icon ?? "alert-circle",
-      action: theme.colors.onError,
+      accent: theme.colors.error,
     },
     warning: {
-      bg: theme.colors.secondary,
-      text: theme.colors.onSecondary,
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.onSurface,
       icon: icon ?? "alert",
-      action: theme.colors.onSecondary,
+      accent: theme.colors.secondary,
     },
     info: {
-      bg: theme.colors.primary,
-      text: theme.colors.onPrimary,
+      bg: theme.colors.surfaceVariant,
+      text: theme.colors.onSurface,
       icon: icon ?? "information",
-      action: theme.colors.onPrimary,
+      accent: theme.colors.primary,
     },
   }[variant];
 
   useEffect(() => {
     if (!visible) return;
 
+    // Reset progress
+    progress.setValue(0);
+
     Animated.parallel([
       Animated.spring(translateY, {
         toValue: 0,
         tension: 40,
-        friction: 7,
+        friction: 8,
         useNativeDriver: true,
       }),
       Animated.timing(opacity, {
@@ -82,12 +82,18 @@ export function OverlayToast({
         duration: 200,
         useNativeDriver: true,
       }),
+      Animated.timing(progress, {
+        toValue: 1,
+        duration: duration,
+        easing: Easing.linear,
+        useNativeDriver: false,
+      }),
     ]).start();
 
     const timer = setTimeout(hide, duration);
 
     return () => clearTimeout(timer);
-  }, [visible]);
+  }, [visible, duration]);
 
   const hide = () => {
     Animated.parallel([
@@ -106,6 +112,11 @@ export function OverlayToast({
 
   if (!visible) return null;
 
+  const progressWidth = progress.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
+
   return (
     <Portal>
       <View
@@ -118,82 +129,102 @@ export function OverlayToast({
           zIndex: 9999,
           alignItems: "center",
           paddingHorizontal: tokens.spacing.md,
-          paddingTop: insets.top + tokens.spacing.md,
+          paddingTop: insets.top + tokens.spacing.xs,
         }}
       >
         <Animated.View
           renderToHardwareTextureAndroid
           style={{
             width: "100%",
-            maxWidth: 600,
+            maxWidth: 500,
             alignSelf: "center",
             opacity,
             transform: [{ translateY }],
           }}
         >
-          <Surface
-            elevation={5}
-            style={{
-              minHeight: 48,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              paddingVertical: tokens.spacing.xs,
-              paddingHorizontal: tokens.spacing.md,
-              borderRadius: tokens.radii.md,
-              backgroundColor: variantConfig.bg,
-            }}
-          >
-            <View
+          <TouchableOpacity activeOpacity={0.9} onPress={hide}>
+            <Surface
               style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                paddingVertical: tokens.spacing.sm,
+                borderRadius: tokens.radii.xl,
+                backgroundColor: variantConfig.bg,
+                ...Platform.select({
+                  ios: {
+                    shadowColor: "#000",
+                    shadowOffset: { width: 0, height: 8 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 12,
+                  },
+                }),
               }}
             >
-              <Icon
-                source={variantConfig.icon}
-                size={22}
-                color={variantConfig.text}
-              />
-
-              <Text
-                variant="bodyMedium"
+              <View
                 style={{
-                  flex: 1,
-                  marginLeft: tokens.spacing.sm,
-                  color: variantConfig.text,
+                  minHeight: 56,
+                  borderRadius: tokens.radii.xl,
+                  overflow: "hidden", // Clip progress bar here
                 }}
               >
-                {message}
-              </Text>
-            </View>
-
-            {actionLabel && (
-              <TouchableOpacity
-                onPress={() => {
-                  onAction?.();
-                  hide();
-                }}
-                style={{
-                  marginLeft: tokens.spacing.sm,
-                  paddingHorizontal: tokens.spacing.sm,
-                  paddingVertical: tokens.spacing.md,
-                }}
-              >
-                <Text
-                  variant="labelLarge"
+                <View
                   style={{
-                    fontWeight: "bold",
-                    color: variantConfig.action,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    paddingVertical: tokens.spacing.sm,
+                    paddingHorizontal: tokens.spacing.lg,
+                    flex: 1,
                   }}
                 >
-                  {actionLabel.toUpperCase()}
-                </Text>
-              </TouchableOpacity>
-            )}
-          </Surface>
+                  <View
+                    style={{
+                      width: 32,
+                      height: 32,
+                      borderRadius: 16,
+                      backgroundColor: "rgba(255, 255, 255, 0.08)",
+                      justifyContent: "center",
+                      alignItems: "center",
+                    }}
+                  >
+                    <Icon
+                      source={variantConfig.icon}
+                      size={20}
+                      color={variantConfig.accent}
+                    />
+                  </View>
+
+                  <Text
+                    variant="bodyMedium"
+                    style={{
+                      flex: 1,
+                      marginLeft: tokens.spacing.md,
+                      color: variantConfig.text,
+                      fontWeight: "500",
+                    }}
+                  >
+                    {message}
+                  </Text>
+                </View>
+
+                {/* Progress Indicator */}
+                <View
+                  style={{
+                    height: 3,
+                    width: "100%",
+                    backgroundColor: "rgba(255, 255, 255, 0.05)",
+                    position: "absolute",
+                    bottom: 0,
+                  }}
+                >
+                  <Animated.View
+                    style={{
+                      height: "100%",
+                      width: progressWidth,
+                      backgroundColor: variantConfig.accent,
+                      opacity: 0.9,
+                    }}
+                  />
+                </View>
+              </View>
+            </Surface>
+          </TouchableOpacity>
         </Animated.View>
       </View>
     </Portal>

@@ -54,7 +54,17 @@ export default function Main() {
     });
   };
 
-  const handleConfirm = () => {
+  const handleNormalConfirm = () => {
+    confirm({
+      title: "Save Changes?",
+      message: "Would you like to save your current progress before leaving?",
+      confirmText: "Save",
+      cancelText: "Discard",
+      onConfirm: () => toast({ message: "Changes saved", variant: "success" }),
+    });
+  };
+
+  const handleDestructiveConfirm = () => {
     confirm({
       title: "Are you sure?",
       message: "This action will permanently delete the item. This cannot be undone.",
@@ -65,12 +75,18 @@ export default function Main() {
     });
   };
 
-  const handleToast = () => {
+  const handleToast = (variant: any = "default") => {
+    const messages = {
+      success: "Changes saved successfully!",
+      error: "Failed to update record.",
+      warning: "Storage space is almost full.",
+      info: "A new update is available.",
+      default: "This is a standard notification.",
+    };
+
     toast({
-      message: "Changes saved successfully!",
-      variant: "success",
-      actionLabel: "Undo",
-      onAction: () => alert({ title: "Undo", message: "Action has been reversed." }),
+      message: messages[variant as keyof typeof messages] || messages.default,
+      variant,
     });
   };
 
@@ -226,9 +242,22 @@ export default function Main() {
               <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
                 Used when a user needs to confirm an action.
               </Text>
-              <Button mode="outlined" onPress={handleConfirm}>
-                Show Confirm
-              </Button>
+              <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
+                <Button 
+                  mode="outlined" 
+                  onPress={handleNormalConfirm}
+                  style={{ flex: 1, borderRadius: tokens.radii.lg }}
+                >
+                  Normal
+                </Button>
+                <Button 
+                  mode="outlined" 
+                  onPress={handleDestructiveConfirm}
+                  style={{ flex: 1, borderRadius: tokens.radii.lg }}
+                >
+                  Destructive
+                </Button>
+              </View>
             </View>
 
             <Divider />
@@ -238,9 +267,20 @@ export default function Main() {
               <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
                 Non-intrusive feedback messages at the bottom.
               </Text>
-              <Button mode="outlined" onPress={handleToast}>
-                Show Toast  
-              </Button>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs }}>
+                {(['success', 'error', 'warning', 'info', 'default'] as const).map((v) => (
+                  <Button 
+                    key={v}
+                    mode="outlined" 
+                    compact
+                    onPress={() => handleToast(v)}
+                    style={{ borderRadius: tokens.radii.md }}
+                    labelStyle={{ fontSize: 12 }}
+                  >
+                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                  </Button>
+                ))}
+              </View>
             </View>
 
             <Divider />

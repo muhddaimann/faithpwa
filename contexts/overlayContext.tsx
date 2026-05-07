@@ -25,8 +25,6 @@ type ConfirmOptions = {
 type ToastOptions = {
   message: string;
   duration?: number;
-  actionLabel?: string;
-  onAction?: () => void;
   variant?: ToastVariant;
   icon?: string;
 };
@@ -170,8 +168,6 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
       <OverlayToast 
         visible={toastVisible}
         message={toastConfig?.message || ''}
-        actionLabel={toastConfig?.actionLabel}
-        onAction={toastConfig?.onAction}
         onDismiss={() => setToastVisible(false)}
         duration={toastConfig?.duration}
         variant={toastConfig?.variant}
