@@ -4,6 +4,7 @@ import { OverlayConfirm } from "../components/confirm";
 import { OverlayToast, ToastVariant } from "../components/toast";
 import { OverlayModal } from "../components/modal";
 import { OverlaySheet } from "../components/sheet";
+import { OverlayLoader } from "../components/loader";
 
 type AlertOptions = {
   title: string;
@@ -42,13 +43,24 @@ type SheetOptions = {
 };
 
 type OverlayContextType = {
+  // Alert
   alert: (options: AlertOptions) => void;
+  // Confirm
   confirm: (options: ConfirmOptions) => void;
+  // Toast
   toast: (options: ToastOptions | string) => void;
+  // Modal
   showModal: (options: ModalOptions) => void;
   hideModal: () => void;
+  // Sheet
   showSheet: (options: SheetOptions) => void;
   hideSheet: () => void;
+  // Loader
+  showLoader: (message?: string) => void;
+  hideLoader: () => void;
+  isLoading: boolean;
+  isRefreshing: boolean;
+  performRefresh: (task: () => Promise<void>, message?: string) => Promise<void>;
 };
 
 const OverlayContext = createContext<OverlayContextType | undefined>(undefined);
@@ -73,6 +85,11 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   // Sheet State
   const [sheetVisible, setSheetVisible] = useState(false);
   const [sheetConfig, setSheetConfig] = useState<SheetOptions | null>(null);
+
+  // Loader State
+  const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loaderMessage, setLoaderMessage] = useState<string | undefined>(undefined);
 
   const alert = useCallback((options: AlertOptions) => {
     setAlertConfig(options);
@@ -113,6 +130,29 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     sheetConfig?.onDismiss?.();
   }, [sheetConfig]);
 
+  const showLoader = useCallback((msg?: string) => {
+    setLoaderMessage(msg);
+    setIsLoading(true);
+  }, []);
+
+  const hideLoader = useCallback(() => {
+    setIsLoading(false);
+  }, []);
+
+  const performRefresh = useCallback(async (task: () => Promise<void>, msg: string = "Refreshing...") => {
+    setIsRefreshing(true);
+    showLoader(msg);
+    const refreshTimeout = setTimeout(() => setIsRefreshing(false), 0);
+
+    try {
+      await task();
+    } finally {
+      clearTimeout(refreshTimeout);
+      hideLoader();
+      setIsRefreshing(false);
+    }
+  }, [showLoader, hideLoader]);
+
   const handleAlertClose = () => {
     setAlertVisible(false);
     alertConfig?.onPress?.();
@@ -129,7 +169,10 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <OverlayContext.Provider value={{ alert, confirm, toast, showModal, hideModal, showSheet, hideSheet }}>
+    <OverlayContext.Provider value={{ 
+      alert, confirm, toast, showModal, hideModal, showSheet, hideSheet,
+      showLoader, hideLoader, isLoading, isRefreshing, performRefresh
+    }}>
       {children}
       
       <OverlayAlert 
@@ -173,6 +216,8 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
         variant={toastConfig?.variant}
         icon={toastConfig?.icon}
       />
+
+      <OverlayLoader visible={isLoading} message={loaderMessage} />
 
     </OverlayContext.Provider>
   );

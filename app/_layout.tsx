@@ -3,7 +3,6 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { DesignProvider } from "../contexts/designContext";
 import { ThemeProvider } from "../contexts/themeContext";
 import { OverlayProvider } from "../contexts/overlayContext";
-import { LoaderProvider } from "../contexts/loaderContext";
 import { AuthProvider } from "../contexts/authContext";
 import { TokenProvider } from "../contexts/tokenContext";
 import * as SplashScreen from "expo-splash-screen";
@@ -38,15 +37,13 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <DesignProvider>
         <ThemeProvider>
-          <LoaderProvider>
-            <OverlayProvider>
-              <TokenProvider>
-                <AuthProvider>
-                  <AppContent />
-                </AuthProvider>
-              </TokenProvider>
-            </OverlayProvider>
-          </LoaderProvider>
+          <OverlayProvider>
+            <TokenProvider>
+              <AuthProvider>
+                <AppContent />
+              </AuthProvider>
+            </TokenProvider>
+          </OverlayProvider>
         </ThemeProvider>
       </DesignProvider>
     </SafeAreaProvider>

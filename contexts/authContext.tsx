@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { router } from 'expo-router';
 import { useToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
-import { useLoader } from './loaderContext';
 
 type AuthContextType = {
   user: string | null;
@@ -24,8 +23,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoading, setIsLoading] = useState(true);
   
   const { getToken, saveToken, deleteToken } = useToken();
-  const { alert, confirm, toast } = useOverlay();
-  const { showLoader, hideLoader } = useLoader();
+  const { alert, confirm, toast, showLoader, hideLoader } = useOverlay();
 
   useEffect(() => {
     const loadSession = async () => {

@@ -1,11 +1,24 @@
-import React, { useEffect, useState } from "react";
-import { View, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
-import { Text, Button, Card, useTheme, Divider, Icon } from "react-native-paper";
+import React, { useEffect, useState, useRef } from "react";
+import {
+  View,
+  ScrollView,
+  TouchableOpacity,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from "react-native";
+import {
+  Text,
+  Button,
+  Card,
+  useTheme,
+  Divider,
+  Icon,
+} from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
-import { useLoader } from "../../../contexts/loaderContext";
 import Header from "../../../components/header";
+import ScrollTop from "../../../components/scrollTop";
 
 const DAYS = [
   "Monday",
@@ -21,9 +34,20 @@ export default function Main() {
   const theme = useTheme();
   const tokens = useDesign();
   const { setHideTabBar } = useTabs();
-  const { alert, confirm, toast, showModal, hideModal, showSheet, hideSheet } = useOverlay();
-  const { showLoader, hideLoader, performRefresh, isRefreshing } = useLoader();
+  const {
+    alert,
+    confirm,
+    toast,
+    showModal,
+    hideModal,
+    showSheet,
+    showLoader,
+    hideLoader,
+    performRefresh,
+  } = useOverlay();
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   useEffect(() => {
     setHideTabBar(true);
@@ -32,7 +56,7 @@ export default function Main() {
 
   const toggleDay = (day: string) => {
     setSelectedDays((prev) =>
-      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day]
+      prev.includes(day) ? prev.filter((d) => d !== day) : [...prev, day],
     );
   };
 
@@ -44,6 +68,15 @@ export default function Main() {
         variant: "success",
       });
     }, "Syncing Data...");
+  };
+
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offset = e.nativeEvent.contentOffset.y;
+    setShowScrollTop(offset > 300);
+  };
+
+  const scrollToTop = () => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const handleAlert = () => {
@@ -67,7 +100,8 @@ export default function Main() {
   const handleDestructiveConfirm = () => {
     confirm({
       title: "Are you sure?",
-      message: "This action will permanently delete the item. This cannot be undone.",
+      message:
+        "This action will permanently delete the item. This cannot be undone.",
       confirmText: "Delete",
       cancelText: "Keep it",
       isDestructive: true,
@@ -105,40 +139,63 @@ export default function Main() {
     showModal({
       content: (
         <View style={{ gap: tokens.spacing.md }}>
-          <View style={{ paddingBottom: tokens.spacing.sm, marginBottom: tokens.spacing.xs }}>
-            <Text variant="titleLarge" style={{ fontWeight: 'bold' }}>Select Days</Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>Choose your preferred schedule</Text>
+          <View
+            style={{
+              paddingBottom: tokens.spacing.sm,
+              marginBottom: tokens.spacing.xs,
+            }}
+          >
+            <Text variant="titleLarge" style={{ fontWeight: "bold" }}>
+              Select Days
+            </Text>
+            <Text
+              variant="bodySmall"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              Choose your preferred schedule
+            </Text>
           </View>
-          
+
           <View>
             {DAYS.map((day) => (
-              <TouchableOpacity 
-                key={day} 
+              <TouchableOpacity
+                key={day}
                 onPress={() => {
                   toggleDay(day);
                   toast(`Selected ${day}`);
                 }}
-                style={{ 
-                  flexDirection: 'row', 
-                  alignItems: 'center', 
-                  justifyContent: 'space-between',
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                   paddingVertical: tokens.spacing.sm,
                 }}
               >
                 <Text variant="bodyLarge">{day}</Text>
-                <Icon 
-                  source={selectedDays.includes(day) ? "check-circle" : "circle-outline"} 
-                  size={24} 
-                  color={selectedDays.includes(day) ? theme.colors.primary : theme.colors.outline} 
+                <Icon
+                  source={
+                    selectedDays.includes(day)
+                      ? "check-circle"
+                      : "circle-outline"
+                  }
+                  size={24}
+                  color={
+                    selectedDays.includes(day)
+                      ? theme.colors.primary
+                      : theme.colors.outline
+                  }
                 />
               </TouchableOpacity>
             ))}
           </View>
-          
-          <Button 
-            mode="contained" 
-            onPress={hideModal} 
-            style={{ marginTop: tokens.spacing.md, borderRadius: tokens.radii.pill }}
+
+          <Button
+            mode="contained"
+            onPress={hideModal}
+            style={{
+              marginTop: tokens.spacing.md,
+              borderRadius: tokens.radii.pill,
+            }}
           >
             Apply Selection
           </Button>
@@ -153,12 +210,13 @@ export default function Main() {
       content: (
         <View style={{ gap: tokens.spacing.lg }}>
           <Text variant="bodyLarge" style={{ lineHeight: 24 }}>
-            This is the new Page Sheet component. It's designed to provide an immersive experience 
-            for detailed content, similar to how iOS handles item detail views.
+            This is the new Page Sheet component. It's designed to provide an
+            immersive experience for detailed content, similar to how iOS
+            handles item detail views.
           </Text>
-          
+
           <Divider />
-          
+
           <View style={{ gap: tokens.spacing.sm }}>
             <Text variant="titleMedium">Features</Text>
             {[
@@ -166,9 +224,12 @@ export default function Main() {
               "Smooth slide-up spring animation",
               "Integrated header with close button",
               "Visual grabber indicator",
-              "Optimized for long scrollable content"
+              "Optimized for long scrollable content",
             ].map((feature, i) => (
-              <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View
+                key={i}
+                style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+              >
                 <Icon source="check" size={20} color={theme.colors.primary} />
                 <Text variant="bodyMedium">{feature}</Text>
               </View>
@@ -178,9 +239,10 @@ export default function Main() {
           <Divider />
 
           <Text variant="bodyMedium" style={{ lineHeight: 22 }}>
-            You can use this for displaying deep details about an item, long forms, 
-            or complex interactive sub-pages without navigating away from the current context.
-            It respects the top safe area insets and provides a professional feel.
+            You can use this for displaying deep details about an item, long
+            forms, or complex interactive sub-pages without navigating away from
+            the current context. It respects the top safe area insets and
+            provides a professional feel.
           </Text>
         </View>
       ),
@@ -190,21 +252,21 @@ export default function Main() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView
+        ref={scrollViewRef}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{
           flexGrow: 1,
           paddingHorizontal: tokens.spacing.xl,
           paddingBottom: tokens.spacing["3xl"],
         }}
-        refreshControl={
-          <RefreshControl
-            refreshing={isRefreshing}
-            onRefresh={handleRefresh}
-            colors={[theme.colors.primary]}
-            tintColor={theme.colors.primary}
-          />
-        }
+        showsVerticalScrollIndicator={false}
       >
-        <Header title="Overlay Demo" subtitle="Interactive Components" showBack />
+        <Header
+          title="Overlay Demo"
+          subtitle="Interactive Components"
+          showBack
+        />
 
         <Card
           mode="elevated"
@@ -218,16 +280,38 @@ export default function Main() {
             gap: tokens.spacing.lg,
           }}
         >
-          <Text variant="bodyLarge" style={{ color: theme.colors.onSurfaceVariant }}>
-            Explore the different types of interactive overlays available in the application.
+          <Text
+            variant="bodyLarge"
+            style={{ color: theme.colors.onSurfaceVariant }}
+          >
+            Explore the different types of interactive overlays available in the
+            application.
           </Text>
 
           <Divider />
 
           <View style={{ gap: tokens.spacing.md }}>
             <View>
+              <Text variant="titleMedium">Refresh Simulation</Text>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
+                Simulates background data fetching with a loader.
+              </Text>
+              <Button mode="outlined" onPress={handleRefresh}>
+                Refresh Data
+              </Button>
+            </View>
+
+            <Divider />
+
+            <View>
               <Text variant="titleMedium">Alert Dialog</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Used for simple informational messages.
               </Text>
               <Button mode="outlined" onPress={handleAlert}>
@@ -239,19 +323,22 @@ export default function Main() {
 
             <View>
               <Text variant="titleMedium">Confirmation Dialog</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Used when a user needs to confirm an action.
               </Text>
-              <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
-                <Button 
-                  mode="outlined" 
+              <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+                <Button
+                  mode="outlined"
                   onPress={handleNormalConfirm}
                   style={{ flex: 1, borderRadius: tokens.radii.lg }}
                 >
                   Normal
                 </Button>
-                <Button 
-                  mode="outlined" 
+                <Button
+                  mode="outlined"
                   onPress={handleDestructiveConfirm}
                   style={{ flex: 1, borderRadius: tokens.radii.lg }}
                 >
@@ -264,14 +351,23 @@ export default function Main() {
 
             <View>
               <Text variant="titleMedium">Toast Notification</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Non-intrusive feedback messages at the bottom.
               </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: tokens.spacing.xs }}>
-                {(['success', 'error', 'warning', 'info'] as const).map((v) => (
-                  <Button 
+              <View
+                style={{
+                  flexDirection: "row",
+                  flexWrap: "wrap",
+                  gap: tokens.spacing.xs,
+                }}
+              >
+                {(["success", "error", "warning", "info"] as const).map((v) => (
+                  <Button
                     key={v}
-                    mode="outlined" 
+                    mode="outlined"
                     compact
                     onPress={() => handleToast(v)}
                     style={{ borderRadius: tokens.radii.md }}
@@ -287,7 +383,10 @@ export default function Main() {
 
             <View>
               <Text variant="titleMedium">Custom Modal</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Flexible container for complex UI or forms.
               </Text>
               <Button mode="outlined" onPress={handleModal}>
@@ -299,7 +398,10 @@ export default function Main() {
 
             <View>
               <Text variant="titleMedium">Page Sheet (iOS Style)</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Immersive container for detailed content or long forms.
               </Text>
               <Button mode="outlined" onPress={handleSheet}>
@@ -311,7 +413,10 @@ export default function Main() {
 
             <View>
               <Text variant="titleMedium">Full Screen Loader</Text>
-              <Text variant="bodySmall" style={{ marginBottom: tokens.spacing.sm }}>
+              <Text
+                variant="bodySmall"
+                style={{ marginBottom: tokens.spacing.sm }}
+              >
                 Blocks UI interaction during long operations.
               </Text>
               <Button mode="outlined" onPress={handleLoader}>
@@ -321,6 +426,8 @@ export default function Main() {
           </View>
         </Card>
       </ScrollView>
+
+      <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
     </View>
   );
 }
