@@ -106,7 +106,7 @@ export default function Login() {
             mode="contained"
             onPress={handleLogin}
             style={{
-              borderRadius: tokens.radii.lg,
+              borderRadius: tokens.radii.pill,
               paddingVertical: 4,
             }}
             contentStyle={{ paddingVertical: 6 }}
