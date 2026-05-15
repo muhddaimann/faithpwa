@@ -20,6 +20,7 @@ import {
   SafeAreaProvider,
   SafeAreaView,
 } from "react-native-safe-area-context";
+import { useOverlay } from "../contexts/overlayContext";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -57,24 +58,38 @@ export default function RootLayout() {
 
 function AppContent() {
   const theme = useTheme();
+  const { isOverlayActive } = useOverlay();
   const { width } = useWindowDimensions();
   const isMobileWidth = width <= 500;
 
   useEffect(() => {
     if (Platform.OS === "web") {
-      // Sync body background with theme for mobile browsers
-      document.body.style.backgroundColor = isMobileWidth
-        ? theme.colors.background
-        : theme.colors.surfaceVariant;
+      const color = isOverlayActive
+        ? "#9c9ea0"
+        : !isMobileWidth
+          ? theme.colors.surfaceVariant
+          : theme.colors.background;
+
+      document.body.style.backgroundColor = color;
+
+      let meta = document.querySelector('meta[name="theme-color"]');
+      if (!meta) {
+        meta = document.createElement("meta");
+        meta.setAttribute("name", "theme-color");
+        document.getElementsByTagName("head")[0].appendChild(meta);
+      }
+      // For mobile browsers, we still want theme-color to be the overlay color or the app background
+      const metaColor = isOverlayActive ? "#9c9ea0" : theme.colors.background;
+      meta.setAttribute("content", metaColor);
     }
-  }, [theme.colors.background, theme.colors.surfaceVariant, isMobileWidth]);
+  }, [theme.colors.background, theme.colors.surfaceVariant, isOverlayActive, isMobileWidth]);
 
   return (
     <View
       style={{
         flex: 1,
         backgroundColor:
-          Platform.OS === "web"
+          Platform.OS === "web" && !isMobileWidth
             ? theme.colors.surfaceVariant
             : theme.colors.background,
         alignItems: "center",
@@ -85,7 +100,6 @@ function AppContent() {
           name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
         />
-        <meta name="theme-color" content={theme.colors.background} />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
           name="apple-mobile-web-app-status-bar-style"

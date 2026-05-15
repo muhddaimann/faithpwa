@@ -68,6 +68,7 @@ type OverlayContextType = {
   hideLoader: () => void;
   isLoading: boolean;
   isRefreshing: boolean;
+  isOverlayActive: boolean;
   performRefresh: (
     task: () => Promise<void>,
     message?: string,
@@ -108,7 +109,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
     undefined,
   );
 
-  const isAnyOverlayVisible =
+  const isOverlayActive =
     alertVisible ||
     confirmVisible ||
     modalVisible ||
@@ -118,18 +119,9 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (Platform.OS === "web") {
       // Prevent background scrolling when overlay is active
-      document.body.style.overflow = isAnyOverlayVisible ? "hidden" : "auto";
-
-      // Sync theme-color meta tag with backdrop state
-      const meta = document.querySelector('meta[name="theme-color"]');
-      if (meta) {
-        meta.setAttribute(
-          "content",
-          isAnyOverlayVisible ? "#322F37" : theme.colors.background,
-        );
-      }
+      document.body.style.overflow = isOverlayActive ? "hidden" : "auto";
     }
-  }, [isAnyOverlayVisible, theme.colors.background]);
+  }, [isOverlayActive]);
 
   const alert = useCallback((options: AlertOptions) => {
     setAlertConfig(options);
@@ -225,6 +217,7 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
         hideLoader,
         isLoading,
         isRefreshing,
+        isOverlayActive,
         performRefresh,
       }}
     >
