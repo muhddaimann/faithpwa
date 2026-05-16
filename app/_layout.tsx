@@ -1,8 +1,8 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter, useSegments } from "expo-router";
 import { DesignProvider } from "../contexts/designContext";
 import { ThemeProvider } from "../contexts/themeContext";
 import { OverlayProvider } from "../contexts/overlayContext";
-import { AuthProvider } from "../contexts/authContext";
+import { AuthProvider, useAuth } from "../contexts/authContext";
 import { TokenProvider } from "../contexts/tokenContext";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -14,7 +14,7 @@ import {
   SourceSansPro_700Bold,
 } from "@expo-google-fonts/source-sans-pro";
 import { useEffect } from "react";
-import { View, Platform, useWindowDimensions } from "react-native";
+import { View, Platform, useWindowDimensions, ActivityIndicator } from "react-native";
 import { useTheme } from "react-native-paper";
 import {
   SafeAreaProvider,
@@ -25,19 +25,15 @@ import { useOverlay } from "../contexts/overlayContext";
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
+  const [fontsLoaded, error] = useFonts({
     SourceSansPro_400Regular,
     SourceSansPro_600SemiBold,
     SourceSansPro_700Bold,
   });
 
-  useEffect(() => {
-    if (loaded || error) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded, error]);
-
-  if (!loaded && !error) return null;
+  if (error) {
+    console.error("Font loading error:", error);
+  }
 
   return (
     <SafeAreaProvider>
@@ -46,7 +42,7 @@ export default function RootLayout() {
           <OverlayProvider>
             <TokenProvider>
               <AuthProvider>
-                <AppContent />
+                <AppContent fontsLoaded={fontsLoaded} />
               </AuthProvider>
             </TokenProvider>
           </OverlayProvider>
@@ -56,19 +52,45 @@ export default function RootLayout() {
   );
 }
 
-function AppContent() {
+function AppContent({ fontsLoaded }: { fontsLoaded: boolean }) {
   const theme = useTheme();
   const { isOverlayActive } = useOverlay();
+  const { user, isLoading: isAuthLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
   const { width } = useWindowDimensions();
   const isMobileWidth = width <= 500;
 
+  // 1. Unified Navigation Guard
+  useEffect(() => {
+    if (isAuthLoading || !fontsLoaded) return;
+
+    const inAuthGroup = segments[0] === "(tabs)";
+
+    if (!user && inAuthGroup) {
+      // Redirect to login if trying to access private routes while logged out
+      router.replace("/");
+    } else if (user && !inAuthGroup) {
+      // Redirect to home if trying to access login while already authenticated
+      router.replace("/(tabs)/home");
+    }
+  }, [user, isAuthLoading, segments, fontsLoaded]);
+
+  // 2. Hide Splash Screen only when EVERYTHING is ready
+  useEffect(() => {
+    if (fontsLoaded && !isAuthLoading) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, isAuthLoading]);
+
+  // 3. Web & PWA specific logic
   useEffect(() => {
     if (Platform.OS === "web") {
-      // 1. Disable native overscroll refresh/rubber-banding
+      // Disable native overscroll refresh/rubber-banding
       document.body.style.overscrollBehavior = "none";
       document.documentElement.style.overscrollBehavior = "none";
 
-      // 2. Register Service Worker for PWA
+      // Register Service Worker for PWA
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js').then(registration => {
@@ -93,11 +115,19 @@ function AppContent() {
         meta.setAttribute("name", "theme-color");
         document.getElementsByTagName("head")[0].appendChild(meta);
       }
-      // For mobile browsers, we still want theme-color to be the overlay color or the app background
       const metaColor = isOverlayActive ? "#9c9ea0" : theme.colors.background;
       meta.setAttribute("content", metaColor);
     }
   }, [theme.colors.background, theme.colors.surfaceVariant, isOverlayActive, isMobileWidth]);
+
+  // Prevent rendering the stack until auth state is determined to avoid layout flashes
+  if (!fontsLoaded || isAuthLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme.colors.background }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View

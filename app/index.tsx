@@ -5,6 +5,7 @@ import {
   Platform,
   TouchableWithoutFeedback,
   Keyboard,
+  Image,
 } from "react-native";
 import { Text, TextInput, Button, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -15,19 +16,21 @@ import { useAuth } from "../contexts/authContext";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const theme = useTheme();
   const tokens = useDesign();
-  const { signIn, user, isLoading } = useAuth();
-
-  React.useEffect(() => {
-    if (!isLoading && user) {
-      router.replace("/(tabs)/home");
-    }
-  }, [user, isLoading]);
+  const { signIn } = useAuth();
 
   const handleLogin = async () => {
-    await signIn(username.trim(), password);
+    if (!username || !password) return;
+    
+    setIsSubmitting(true);
+    try {
+      await signIn(username.trim(), password);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const renderContent = () => (
@@ -103,22 +106,14 @@ export default function Login() {
                 gap: tokens.spacing.lg,
               }}
             >
-              <View
+              <Image
+                source={require("../assets/img/logo.png")}
                 style={{
-                  width: 76,
-                  height: 76,
-                  borderRadius: tokens.radii.full,
-                  backgroundColor: theme.colors.primaryContainer,
-                  alignItems: "center",
-                  justifyContent: "center",
+                  width: 120,
+                  height: 120,
+                  resizeMode: "contain",
                 }}
-              >
-                <MaterialCommunityIcons
-                  name="briefcase-variant-outline"
-                  size={34}
-                  color={theme.colors.primary}
-                />
-              </View>
+              />
 
               <View
                 style={{
@@ -156,74 +151,100 @@ export default function Login() {
             >
               <TextInput
                 label="Username"
-                mode="flat"
+                mode="outlined"
                 value={username}
                 onChangeText={setUsername}
                 autoCapitalize="none"
                 autoCorrect={false}
                 returnKeyType="next"
+                outlineStyle={{
+                  borderRadius: tokens.radii.lg,
+                  borderColor: theme.colors.outline,
+                }}
                 style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: tokens.radii.xl,
-                  overflow: "hidden",
+                  backgroundColor: theme.colors.surface,
                 }}
                 left={
                   <TextInput.Icon
-                    icon={() => (
-                      <MaterialCommunityIcons
-                        name="account-outline"
-                        size={22}
-                        color={theme.colors.primary}
-                      />
-                    )}
+                    icon="account-outline"
+                    color={theme.colors.primary}
                   />
                 }
               />
 
               <TextInput
                 label="Password"
-                mode="flat"
+                mode="outlined"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 returnKeyType="done"
                 onSubmitEditing={handleLogin}
+                outlineStyle={{
+                  borderRadius: tokens.radii.lg,
+                  borderColor: theme.colors.outline,
+                }}
                 style={{
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: tokens.radii.xl,
-                  overflow: "hidden",
+                  backgroundColor: theme.colors.surface,
                 }}
                 left={
                   <TextInput.Icon
-                    icon={() => (
-                      <MaterialCommunityIcons
-                        name="lock-outline"
-                        size={22}
-                        color={theme.colors.primary}
-                      />
-                    )}
+                    icon="lock-outline"
+                    color={theme.colors.primary}
                   />
                 }
               />
             </View>
 
-            <Button
-              mode="contained"
-              onPress={handleLogin}
-              disabled={!username || !password}
-              contentStyle={{
-                height: 56,
-              }}
-              style={{
-                borderRadius: tokens.radii.full,
-              }}
-              labelStyle={{
-                fontWeight: "700",
-                fontSize: 16,
-              }}
-            >
-              Login
-            </Button>
+            <View style={{ gap: tokens.spacing.md }}>
+              <Button
+                mode="contained"
+                onPress={handleLogin}
+                loading={isSubmitting}
+                disabled={!username || !password || isSubmitting}
+                contentStyle={{
+                  height: 56,
+                }}
+                style={{
+                  borderRadius: tokens.radii.lg,
+                  elevation: 2,
+                }}
+                labelStyle={{
+                  fontWeight: "700",
+                  fontSize: 16,
+                }}
+              >
+                {isSubmitting ? "Authenticating..." : "Sign In"}
+              </Button>
+
+              <View style={{ 
+                marginTop: tokens.spacing.sm,
+                alignItems: 'center'
+              }}>
+                <Text 
+                  variant="bodySmall" 
+                  style={{ 
+                    color: theme.colors.onSurfaceVariant,
+                    textAlign: 'center',
+                    lineHeight: 18
+                  }}
+                >
+                  Reach system admin if you need help or have trouble signing in.
+                </Text>
+              </View>
+            </View>
+
+            <View style={{ 
+              marginTop: tokens.spacing.xl, 
+              paddingTop: tokens.spacing.lg,
+              borderTopWidth: 1,
+              borderTopColor: theme.colors.surfaceVariant,
+              alignItems: 'center'
+            }}>
+              <Text variant="labelSmall" style={{ color: theme.colors.outline, textAlign: 'center' }}>
+                FAITH v1.0.0 • Secured Workspace
+              </Text>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>

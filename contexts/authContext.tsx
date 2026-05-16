@@ -3,8 +3,16 @@ import { router } from 'expo-router';
 import { useToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
 
+type User = {
+  username: string;
+  name: string;
+  staffId: string;
+  designation: string;
+  avatarText: string;
+};
+
 type AuthContextType = {
-  user: string | null;
+  user: User | null;
   isLoading: boolean;
   signIn: (username: string, password: string) => Promise<boolean>;
   signOut: (force?: boolean) => void;
@@ -18,8 +26,16 @@ export const useAuth = () => {
   return context;
 };
 
+const DUMMY_USER: User = {
+  username: 'user',
+  name: 'Aiman Hakim',
+  staffId: 'CS1024',
+  designation: 'Customer Service Executive',
+  avatarText: 'AH',
+};
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   const { getToken, saveToken, deleteToken } = useToken();
@@ -28,14 +44,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const savedUser = await getToken();
-        if (savedUser) {
-          setUser(savedUser);
+        const savedUsername = await getToken();
+        if (savedUsername === DUMMY_USER.username) {
+          setUser(DUMMY_USER);
         }
       } catch (e) {
         console.error('Failed to load session', e);
       } finally {
-        setIsLoading(false);
+        // Add a small delay for smoother transition
+        setTimeout(() => setIsLoading(false), 500);
       }
     };
     loadSession();
@@ -43,15 +60,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (username: string, password: string) => {
     showLoader("Signing you in...");
-    await new Promise(resolve => setTimeout(resolve, 800));
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
-    if (username === 'user' && password === '123') {
+    if (username === DUMMY_USER.username && password === '123') {
       try {
         await saveToken(username);
-        setUser(username);
+        setUser(DUMMY_USER);
         hideLoader();
-        toast({ message: `Success! Welcome back, ${username}.`, variant: 'success' });
-        router.replace('/(tabs)/home');
+        toast({ message: `Success! Welcome back, ${DUMMY_USER.name}.`, variant: 'success' });
         return true;
       } catch (e) {
         hideLoader();
@@ -78,7 +94,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await deleteToken();
       setUser(null);
       hideLoader();
-      router.replace('/');
     } catch (e) {
       hideLoader();
       console.error('Failed to delete session', e);

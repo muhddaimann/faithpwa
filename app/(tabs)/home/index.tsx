@@ -11,11 +11,13 @@ import ScrollTop from "../../../components/scrollTop";
 import { useTabs } from "../../../contexts/tabContext";
 import Head from "../../../components/head";
 import { useRouter } from "expo-router";
+import { useAuth } from "../../../contexts/authContext";
 
 export default function Home() {
   const theme = useTheme();
   const tokens = useDesign();
   const router = useRouter();
+  const { user } = useAuth();
   const { onScroll } = useTabs();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
@@ -46,9 +48,9 @@ export default function Home() {
       >
         <Head
           greeting="Good Morning"
-          username="Aiman Hakim"
-          designation="Customer Service Executive"
-          avatarText="AH"
+          username={user?.name || "User"}
+          designation={user?.designation || ""}
+          avatarText={user?.avatarText || "U"}
           onNotificationPress={() => router.push("home/newsflash")}
         />
       </ScrollView>

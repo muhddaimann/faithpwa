@@ -9,6 +9,7 @@ import { useTheme, Text, Card, List, Divider } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
+import { useAuth } from "../../../contexts/authContext";
 import ScrollTop from "../../../components/scrollTop";
 import Tail from "../../../components/tail";
 import { useRouter } from "expo-router";
@@ -16,6 +17,7 @@ import { useRouter } from "expo-router";
 export default function Settings() {
   const theme = useTheme();
   const tokens = useDesign();
+  const { user } = useAuth();
   const { onScroll } = useTabs();
   const { toast } = useOverlay();
   const router = useRouter();
@@ -47,10 +49,10 @@ export default function Settings() {
         showsVerticalScrollIndicator={false}
       >
         <Tail
-          avatarText="AH"
-          username="Aiman Hakim"
-          staffId="CS1024"
-          designation="Customer Service Executive"
+          avatarText={user?.avatarText || "U"}
+          username={user?.name || "User"}
+          staffId={user?.staffId || "----"}
+          designation={user?.designation || ""}
           onUpdateProfilePress={() => router.push("settings/profile")}
         />
         {/* Preferences Section */}
