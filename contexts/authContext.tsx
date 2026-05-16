@@ -89,10 +89,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const performSignOut = useCallback(async () => {
     showLoader("Logging you out...");
     try {
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       await deleteToken();
       setUser(null);
       hideLoader();
+      toast({ 
+        message: 'Successfully logged out. See you soon!', 
+        variant: 'success' 
+      });
     } catch (e) {
       hideLoader();
       console.error('Failed to delete session', e);
