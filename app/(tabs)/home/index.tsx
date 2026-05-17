@@ -10,6 +10,7 @@ import { useDesign } from "../../../contexts/designContext";
 import ScrollTop from "../../../components/scrollTop";
 import { useTabs } from "../../../contexts/tabContext";
 import Head from "../../../components/head";
+import SectionHeader from "../../../components/section";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/authContext";
 
@@ -42,7 +43,7 @@ export default function Home() {
           paddingTop: tokens.spacing.md,
           paddingBottom: tokens.spacing["3xl"],
           paddingHorizontal: tokens.spacing.lg,
-          gap: tokens.spacing.md,
+          gap: tokens.spacing.lg,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -52,6 +53,30 @@ export default function Home() {
           designation={user?.designation || ""}
           avatarText={user?.avatarText || "U"}
           onNotificationPress={() => router.push("home/newsflash")}
+        />
+
+        <SectionHeader
+          icon="calendar-check"
+          title="Leave"
+          subtitle="Manage leave applications"
+          actionLabel="See All"
+          actionRoute="/leave"
+        />
+
+        <SectionHeader
+          icon="newspaper"
+          title="News Flash"
+          subtitle="Latest company updates"
+          actionLabel="See All"
+          actionRoute="/home/newsflash"
+        />
+
+        <SectionHeader
+          icon="door-sliding"
+          title="Room Booking"
+          subtitle="Reserve meeting rooms"
+          actionLabel="See All"
+          actionRoute="/room-booking"
         />
       </ScrollView>
 
