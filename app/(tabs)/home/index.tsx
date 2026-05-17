@@ -14,6 +14,7 @@ import SectionHeader from "../../../components/section";
 import { useRouter } from "expo-router";
 import { useAuth } from "../../../contexts/authContext";
 import AttendanceCard from "../../../components/attendance/attendanceCard";
+import NewsflashCarousel from "../../../components/newsflash/newsflashCarousel";
 
 export default function Home() {
   const theme = useTheme();
@@ -44,7 +45,7 @@ export default function Home() {
           paddingTop: tokens.spacing.md,
           paddingBottom: tokens.spacing["3xl"],
           paddingHorizontal: tokens.spacing.lg,
-          gap: tokens.spacing.lg,
+          gap: tokens.spacing.md,
         }}
         showsVerticalScrollIndicator={false}
       >
@@ -72,6 +73,7 @@ export default function Home() {
           actionLabel="See All"
           actionRoute="/home/newsflash"
         />
+        <NewsflashCarousel />
 
         <SectionHeader
           icon="door-sliding"
