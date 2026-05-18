@@ -260,7 +260,8 @@ export default function Login() {
                 variant="labelSmall"
                 style={{ color: theme.colors.outline, textAlign: "center" }}
               >
-                FAITH v1.0.0 • Secured Workspace
+                This is dummy PWA version of FAITH. Username: user | Password:
+                123 to continue.
               </Text>
             </View>
           </View>
