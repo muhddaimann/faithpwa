@@ -1,6 +1,17 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export const newsflashes = [
+export type NewsflashPriority = "High" | "Medium" | "Low";
+
+export type NewsflashItem = {
+  id: number;
+  type: string;
+  priority: NewsflashPriority;
+  title: string;
+  content: string;
+  timestamp: string;
+};
+
+export const newsflashes: NewsflashItem[] = [
   {
     id: 1,
     type: "Security Memo",
@@ -62,8 +73,15 @@ export const newsflashes = [
   },
 ];
 
+export const newsflashFilters: (NewsflashPriority | "All")[] = [
+  "All",
+  "High",
+  "Medium",
+  "Low",
+];
+
 export const newsflashPriorities: Record<
-  string,
+  NewsflashPriority,
   {
     label: string;
     color: string;

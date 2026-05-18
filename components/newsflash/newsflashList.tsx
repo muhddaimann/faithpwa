@@ -5,77 +5,113 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
 import { useOverlay } from "../../contexts/overlayContext";
 import {
-  LeaveItem,
-  LeaveStatus,
-  leaveFilters,
-  leaves,
-} from "../../constants/leave";
+  NewsflashItem,
+  NewsflashPriority,
+  newsflashFilters,
+  newsflashes,
+  newsflashPriorities,
+} from "../../constants/newsflash";
 
-export default function LeaveList() {
+export default function NewsflashList() {
   const theme = useTheme();
   const { showSheet } = useOverlay();
   const { spacing, radii } = design;
 
-  const [activeFilter, setActiveFilter] = useState<LeaveStatus>("All");
+  const [activeFilter, setActiveFilter] = useState<NewsflashPriority | "All">(
+    "All"
+  );
 
-  const filteredLeaves = useMemo(() => {
-    if (activeFilter === "All") return leaves;
-    return leaves.filter((item) => item.status === activeFilter);
+  const filteredNews = useMemo(() => {
+    if (activeFilter === "All") return newsflashes;
+    return newsflashes.filter((item) => item.priority === activeFilter);
   }, [activeFilter]);
 
-  const getStatusColor = (status: LeaveStatus) => {
-    switch (status) {
-      case "Pending": return "#F59E0B";
-      case "Approved": return "#10B981";
-      case "Rejected": return "#EF4444";
-      case "Cancelled": return "#94A3B8";
-      default: return theme.colors.primary;
-    }
-  };
+  const handleShowDetails = (item: NewsflashItem) => {
+    const priority = newsflashPriorities[item.priority];
 
-  const handleShowDetails = (item: LeaveItem) => {
-    const statusColor = getStatusColor(item.status);
-    
     showSheet({
-      title: "Leave Details",
+      title: "Announcement Details",
       content: (
         <View style={{ gap: spacing.lg, paddingBottom: spacing.lg }}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: spacing.md }}>
-            <View style={{ 
-              backgroundColor: statusColor + "15", 
-              padding: spacing.md, 
-              borderRadius: 16 
-            }}>
-              <MaterialCommunityIcons name={item.icon as any} size={32} color={statusColor} />
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: spacing.md,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: priority.color + "15",
+                padding: spacing.md,
+                borderRadius: 16,
+              }}
+            >
+              <MaterialCommunityIcons
+                name={priority.icon as any}
+                size={32}
+                color={priority.color}
+              />
             </View>
-            <View>
-              <Text variant="titleLarge" style={{ fontWeight: "800" }}>{item.type}</Text>
-              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{item.days} • {item.status}</Text>
+            <View style={{ flex: 1 }}>
+              <Text variant="titleLarge" style={{ fontWeight: "800" }}>
+                {item.title}
+              </Text>
+              <Text
+                variant="bodyMedium"
+                style={{ color: theme.colors.onSurfaceVariant }}
+              >
+                {item.type} • {item.priority} Priority
+              </Text>
             </View>
           </View>
 
           <Divider />
 
           <View style={{ gap: spacing.sm }}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>DURATION</Text>
-            <Text variant="titleMedium" style={{ fontWeight: "700" }}>{item.duration}</Text>
-          </View>
-
-          <View style={{ gap: spacing.sm }}>
-            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>REASON</Text>
-            <View style={{ backgroundColor: theme.colors.surfaceVariant + "40", padding: spacing.md, borderRadius: radii.lg }}>
-              <Text variant="bodyMedium" style={{ lineHeight: 22 }}>{item.reason}</Text>
+            <Text
+              variant="labelSmall"
+              style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}
+            >
+              MESSAGE
+            </Text>
+            <View
+              style={{
+                backgroundColor: theme.colors.surfaceVariant + "40",
+                padding: spacing.md,
+                borderRadius: radii.lg,
+              }}
+            >
+              <Text variant="bodyMedium" style={{ lineHeight: 22 }}>
+                {item.content}
+              </Text>
             </View>
           </View>
 
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
             <View style={{ gap: 4 }}>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>APPLIED ON</Text>
-              <Text variant="bodyMedium">{item.appliedAt}</Text>
+              <Text
+                variant="labelSmall"
+                style={{
+                  color: theme.colors.onSurfaceVariant,
+                  fontWeight: "700",
+                }}
+              >
+                POSTED
+              </Text>
+              <Text variant="bodyMedium">{item.timestamp}</Text>
             </View>
             <View style={{ alignItems: "flex-end", gap: 4 }}>
-              <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>REFERENCE ID</Text>
-              <Text variant="bodyMedium">#LV-{item.id.padStart(4, '0')}</Text>
+              <Text
+                variant="labelSmall"
+                style={{
+                  color: theme.colors.onSurfaceVariant,
+                  fontWeight: "700",
+                }}
+              >
+                REFERENCE ID
+              </Text>
+              <Text variant="bodyMedium">#NF-{item.id.toString().padStart(4, "0")}</Text>
             </View>
           </View>
         </View>
@@ -90,9 +126,12 @@ export default function LeaveList() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ gap: spacing.sm, paddingVertical: 2 }}
       >
-        {leaveFilters.map((item) => {
+        {newsflashFilters.map((item) => {
           const active = activeFilter === item;
-          const statusColor = getStatusColor(item);
+          const statusColor =
+            item === "All"
+              ? theme.colors.primary
+              : newsflashPriorities[item].color;
 
           return (
             <TouchableOpacity
@@ -105,7 +144,9 @@ export default function LeaveList() {
                 borderRadius: radii.full,
                 alignItems: "center",
                 justifyContent: "center",
-                backgroundColor: active ? statusColor : theme.colors.surfaceVariant,
+                backgroundColor: active
+                  ? statusColor
+                  : theme.colors.surfaceVariant,
                 borderWidth: active ? 0 : 1,
                 borderColor: `${theme.colors.outline}15`,
               }}
@@ -124,8 +165,9 @@ export default function LeaveList() {
         })}
       </ScrollView>
 
-        {filteredLeaves.map((item) => {
-          const statusColor = getStatusColor(item.status);
+      <View style={{ gap: spacing.sm }}>
+        {filteredNews.map((item) => {
+          const priority = newsflashPriorities[item.priority];
 
           return (
             <TouchableOpacity
@@ -152,9 +194,9 @@ export default function LeaveList() {
                 }}
               >
                 <MaterialCommunityIcons
-                  name={item.icon as any}
+                  name={priority.icon as any}
                   size={110}
-                  color={statusColor}
+                  color={priority.color}
                 />
               </View>
 
@@ -170,31 +212,41 @@ export default function LeaveList() {
                     paddingHorizontal: 10,
                     paddingVertical: 4,
                     borderRadius: radii.full,
-                    backgroundColor: `${statusColor}15`,
+                    backgroundColor: priority.color + "15",
                     flexDirection: "row",
                     alignItems: "center",
                     gap: 6,
                   }}
                 >
-                  <View 
-                    style={{ 
-                      width: 6, 
-                      height: 6, 
-                      borderRadius: 3, 
-                      backgroundColor: statusColor 
-                    }} 
+                  <View
+                    style={{
+                      width: 6,
+                      height: 6,
+                      borderRadius: 3,
+                      backgroundColor: priority.color,
+                    }}
                   />
                   <Text
                     style={{
                       fontSize: 10,
                       fontWeight: "800",
-                      color: statusColor,
+                      color: priority.color,
                       letterSpacing: 0.5,
                     }}
                   >
-                    {item.status.toUpperCase()}
+                    {item.priority.toUpperCase()}
                   </Text>
                 </View>
+
+                <Text
+                  style={{
+                    fontSize: 11,
+                    color: theme.colors.onSurfaceVariant,
+                    fontWeight: "600",
+                  }}
+                >
+                  {item.timestamp}
+                </Text>
               </View>
 
               <View style={{ marginTop: spacing.xs }}>
@@ -205,7 +257,7 @@ export default function LeaveList() {
                     color: theme.colors.onSurface,
                   }}
                 >
-                  {item.type}
+                  {item.title}
                 </Text>
                 <Text
                   style={{
@@ -215,12 +267,13 @@ export default function LeaveList() {
                     fontWeight: "600",
                   }}
                 >
-                  {item.duration} • {item.days}
+                  {item.type}
                 </Text>
               </View>
             </TouchableOpacity>
           );
         })}
       </View>
+    </View>
   );
 }
