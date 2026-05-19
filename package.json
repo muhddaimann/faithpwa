@@ -9,6 +9,7 @@
   "dependencies": {
     "@expo-google-fonts/source-sans-pro": "^0.2.3",
     "@expo/vector-icons": "^15.1.1",
+    "axios": "^1.16.1",
     "babel-preset-expo": "~55.0.8",
     "expo": "~55.0.23",
     "expo-constants": "~55.0.16",
@@ -24,7 +25,8 @@
     "react-native-paper": "^5.15.0",
     "react-native-safe-area-context": "~5.6.2",
     "react-native-screens": "~4.23.0",
-    "react-native-web": "^0.21.0"
+    "react-native-web": "^0.21.0",
+    "zustand": "^5.0.13"
   },
   "devDependencies": {
     "@types/react": "~19.2.2",
