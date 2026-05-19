@@ -19,6 +19,8 @@ export default function RoomBento() {
       content: (
         <DatePickerContent
           variant="single"
+          title="Pick a Date"
+          subtitle="Select date to check availability"
           value={dateValue}
           onChange={(date) => {
             setDateValue(date);
