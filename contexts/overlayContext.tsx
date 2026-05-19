@@ -6,7 +6,6 @@ import React, {
   useEffect,
 } from "react";
 import { Platform } from "react-native";
-import { useTheme } from "react-native-paper";
 import { OverlayAlert } from "../components/overlay/alert";
 import { OverlayConfirm } from "../components/overlay/confirm";
 import { OverlayToast, ToastVariant } from "../components/overlay/toast";
@@ -78,8 +77,6 @@ type OverlayContextType = {
 const OverlayContext = createContext<OverlayContextType | undefined>(undefined);
 
 export function OverlayProvider({ children }: { children: React.ReactNode }) {
-  const theme = useTheme();
-
   // Alert State
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertConfig, setAlertConfig] = useState<AlertOptions | null>(null);

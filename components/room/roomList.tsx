@@ -1,13 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { View, TouchableOpacity, ScrollView } from "react-native";
-import { Card, Text, Chip, Button, Avatar, useTheme } from "react-native-paper";
+import { Card, Text, Chip, Button, Avatar, useTheme, Divider } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../contexts/designContext";
 import { ROOMS } from "../../constants/room";
+import { useOverlay } from "../../contexts/overlayContext";
 
 export default function RoomList() {
   const theme = useTheme();
   const tokens = useDesign();
+  const { showSheet, toast } = useOverlay();
 
   const [selectedTower, setSelectedTower] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -42,6 +44,79 @@ export default function RoomList() {
       return towerMatch && levelMatch;
     });
   }, [selectedTower, selectedLevel]);
+
+  const handleBooking = (room: any) => {
+    const timeSlots = [];
+    const startHour = 9;
+    const endHour = 18;
+
+    for (let hour = startHour; hour < endHour; hour++) {
+      for (let min of [0, 30]) {
+        const displayHour = hour > 12 ? hour - 12 : hour === 0 ? 12 : hour;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        timeSlots.push({
+          id: `${hour}-${min}`,
+          label: `${displayHour}:${min.toString().padStart(2, "0")} ${ampm}`,
+          isAvailable: Math.random() > 0.3, // Mock availability
+        });
+      }
+    }
+
+    showSheet({
+      title: "Select Time Slot",
+      content: (
+        <View style={{ gap: tokens.spacing.lg }}>
+          <View style={{ gap: 2 }}>
+            <Text variant="titleMedium" style={{ fontWeight: "700" }}>{room.name}</Text>
+            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
+              {room.tower} • {room.level}
+            </Text>
+          </View>
+
+          <Divider />
+
+          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm }}>
+            {timeSlots.map((slot) => (
+              <TouchableOpacity
+                key={slot.id}
+                disabled={!slot.isAvailable}
+                onPress={() => {
+                  toast(`Slot ${slot.label} selected for ${room.name}`);
+                }}
+                style={{
+                  width: "31%",
+                  paddingVertical: tokens.spacing.md,
+                  borderRadius: tokens.radii.lg,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: slot.isAvailable 
+                    ? theme.colors.surfaceVariant + "60" 
+                    : theme.colors.surfaceVariant + "20",
+                  borderWidth: 1,
+                  borderColor: slot.isAvailable 
+                    ? theme.colors.outline + "30" 
+                    : "transparent",
+                  opacity: slot.isAvailable ? 1 : 0.4
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 12, 
+                  fontWeight: "700",
+                  color: slot.isAvailable ? theme.colors.onSurface : theme.colors.onSurfaceVariant
+                }}>
+                  {slot.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <Text variant="bodySmall" style={{ opacity: 0.6, fontStyle: "italic", textAlign: "center" }}>
+            * Greyed out slots are already booked
+          </Text>
+        </View>
+      ),
+    });
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -304,6 +379,13 @@ export default function RoomList() {
                       room.status === "available" ? "contained" : "outlined"
                     }
                     disabled={room.status === "maintenance"}
+                    onPress={() => {
+                      if (room.status === "available") {
+                        handleBooking(room);
+                      } else if (room.status === "occupied") {
+                        toast("Viewing schedule...");
+                      }
+                    }}
                     style={{
                       borderRadius: tokens.radii.full,
                       marginTop: tokens.spacing.xs,
