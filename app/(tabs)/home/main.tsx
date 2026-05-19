@@ -13,12 +13,14 @@ import {
   useTheme,
   Divider,
   Icon,
+  SegmentedButtons,
 } from "react-native-paper";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
 import Header from "../../../components/header";
 import ScrollTop from "../../../components/scrollTop";
+import NoData from "../../../components/noData";
 
 const DAYS = [
   "Monday",
@@ -48,6 +50,7 @@ export default function Main() {
   const [selectedDays, setSelectedDays] = useState<string[]>([]);
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [demoMode, setDemoMode] = useState("content");
 
   useEffect(() => {
     setHideTabBar(true);
@@ -268,163 +271,193 @@ export default function Main() {
           showBack
         />
 
-        <Card
-          mode="elevated"
-          style={{
-            backgroundColor: theme.colors.surface,
-            borderRadius: tokens.radii.xl,
-            marginTop: tokens.spacing.md,
-          }}
-          contentStyle={{
-            padding: tokens.spacing.xl,
-            gap: tokens.spacing.lg,
-          }}
-        >
-          <Text
-            variant="bodyLarge"
-            style={{ color: theme.colors.onSurfaceVariant }}
+        <SegmentedButtons
+          value={demoMode}
+          onValueChange={setDemoMode}
+          buttons={[
+            {
+              value: "content",
+              label: "Show Data",
+              icon: "database",
+            },
+            {
+              value: "empty",
+              label: "Show Empty",
+              icon: "database-off",
+            },
+          ]}
+          style={{ marginTop: tokens.spacing.md }}
+        />
+
+        {demoMode === "content" ? (
+          <Card
+            mode="elevated"
+            style={{
+              backgroundColor: theme.colors.surface,
+              borderRadius: tokens.radii.xl,
+              marginTop: tokens.spacing.md,
+            }}
+            contentStyle={{
+              padding: tokens.spacing.xl,
+              gap: tokens.spacing.lg,
+            }}
           >
-            Explore the different types of interactive overlays available in the
-            application.
-          </Text>
-
-          <Divider />
-
-          <View style={{ gap: tokens.spacing.md }}>
-            <View>
-              <Text variant="titleMedium">Refresh Simulation</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Simulates background data fetching with a loader.
-              </Text>
-              <Button mode="outlined" onPress={handleRefresh}>
-                Refresh Data
-              </Button>
-            </View>
+            <Text
+              variant="bodyLarge"
+              style={{ color: theme.colors.onSurfaceVariant }}
+            >
+              Explore the different types of interactive overlays available in the
+              application.
+            </Text>
 
             <Divider />
 
-            <View>
-              <Text variant="titleMedium">Alert Dialog</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Used for simple informational messages.
-              </Text>
-              <Button mode="outlined" onPress={handleAlert}>
-                Show Alert
-              </Button>
-            </View>
-
-            <Divider />
-
-            <View>
-              <Text variant="titleMedium">Confirmation Dialog</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Used when a user needs to confirm an action.
-              </Text>
-              <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
-                <Button
-                  mode="outlined"
-                  onPress={handleNormalConfirm}
-                  style={{ flex: 1, borderRadius: tokens.radii.lg }}
+            <View style={{ gap: tokens.spacing.md }}>
+              <View>
+                <Text variant="titleMedium">Refresh Simulation</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
                 >
-                  Normal
-                </Button>
-                <Button
-                  mode="outlined"
-                  onPress={handleDestructiveConfirm}
-                  style={{ flex: 1, borderRadius: tokens.radii.lg }}
-                >
-                  Destructive
+                  Simulates background data fetching with a loader.
+                </Text>
+                <Button mode="outlined" onPress={handleRefresh}>
+                  Refresh Data
                 </Button>
               </View>
-            </View>
 
-            <Divider />
+              <Divider />
 
-            <View>
-              <Text variant="titleMedium">Toast Notification</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Non-intrusive feedback messages at the bottom.
-              </Text>
-              <View
-                style={{
-                  flexDirection: "row",
-                  flexWrap: "wrap",
-                  gap: tokens.spacing.xs,
-                }}
-              >
-                {(["success", "error", "warning", "info"] as const).map((v) => (
+              <View>
+                <Text variant="titleMedium">Alert Dialog</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Used for simple informational messages.
+                </Text>
+                <Button mode="outlined" onPress={handleAlert}>
+                  Show Alert
+                </Button>
+              </View>
+
+              <Divider />
+
+              <View>
+                <Text variant="titleMedium">Confirmation Dialog</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Used when a user needs to confirm an action.
+                </Text>
+                <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
                   <Button
-                    key={v}
                     mode="outlined"
-                    compact
-                    onPress={() => handleToast(v)}
-                    style={{ borderRadius: tokens.radii.md }}
-                    labelStyle={{ fontSize: 12 }}
+                    onPress={handleNormalConfirm}
+                    style={{ flex: 1, borderRadius: tokens.radii.lg }}
                   >
-                    {v.charAt(0).toUpperCase() + v.slice(1)}
+                    Normal
                   </Button>
-                ))}
+                  <Button
+                    mode="outlined"
+                    onPress={handleDestructiveConfirm}
+                    style={{ flex: 1, borderRadius: tokens.radii.lg }}
+                  >
+                    Destructive
+                  </Button>
+                </View>
+              </View>
+
+              <Divider />
+
+              <View>
+                <Text variant="titleMedium">Toast Notification</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Non-intrusive feedback messages at the bottom.
+                </Text>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    flexWrap: "wrap",
+                    gap: tokens.spacing.xs,
+                  }}
+                >
+                  {(["success", "error", "warning", "info"] as const).map((v) => (
+                    <Button
+                      key={v}
+                      mode="outlined"
+                      compact
+                      onPress={() => handleToast(v)}
+                      style={{ borderRadius: tokens.radii.md }}
+                      labelStyle={{ fontSize: 12 }}
+                    >
+                      {v.charAt(0).toUpperCase() + v.slice(1)}
+                    </Button>
+                  ))}
+                </View>
+              </View>
+
+              <Divider />
+
+              <View>
+                <Text variant="titleMedium">Custom Modal</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Flexible container for complex UI or forms.
+                </Text>
+                <Button mode="outlined" onPress={handleModal}>
+                  Show Modal
+                </Button>
+              </View>
+
+              <Divider />
+
+              <View>
+                <Text variant="titleMedium">Page Sheet (iOS Style)</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Immersive container for detailed content or long forms.
+                </Text>
+                <Button mode="outlined" onPress={handleSheet}>
+                  Show Sheet
+                </Button>
+              </View>
+
+              <Divider />
+
+              <View>
+                <Text variant="titleMedium">Full Screen Loader</Text>
+                <Text
+                  variant="bodySmall"
+                  style={{ marginBottom: tokens.spacing.sm }}
+                >
+                  Blocks UI interaction during long operations.
+                </Text>
+                <Button mode="outlined" onPress={handleLoader}>
+                  Simulate 2s Loading
+                </Button>
               </View>
             </View>
-
-            <Divider />
-
-            <View>
-              <Text variant="titleMedium">Custom Modal</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Flexible container for complex UI or forms.
-              </Text>
-              <Button mode="outlined" onPress={handleModal}>
-                Show Modal
-              </Button>
-            </View>
-
-            <Divider />
-
-            <View>
-              <Text variant="titleMedium">Page Sheet (iOS Style)</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Immersive container for detailed content or long forms.
-              </Text>
-              <Button mode="outlined" onPress={handleSheet}>
-                Show Sheet
-              </Button>
-            </View>
-
-            <Divider />
-
-            <View>
-              <Text variant="titleMedium">Full Screen Loader</Text>
-              <Text
-                variant="bodySmall"
-                style={{ marginBottom: tokens.spacing.sm }}
-              >
-                Blocks UI interaction during long operations.
-              </Text>
-              <Button mode="outlined" onPress={handleLoader}>
-                Simulate 2s Loading
-              </Button>
-            </View>
+          </Card>
+        ) : (
+          <View style={{ marginTop: tokens.spacing["3xl"], flex: 1 }}>
+            <NoData
+              title="No Demo Data"
+              description="You are currently viewing the empty state demonstration. Switch back to see the interactive components."
+              icon="database-off"
+              buttonLabel="Switch to Data"
+              onPress={() => setDemoMode("content")}
+            />
           </View>
-        </Card>
+        )}
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
