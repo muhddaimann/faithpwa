@@ -38,7 +38,7 @@ export default function Settings() {
   const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offset = e.nativeEvent.contentOffset.y;
 
-    setShowScrollTop(offset > 300);
+    setShowScrollTop(offset > 200);
 
     onScroll(offset);
   };
