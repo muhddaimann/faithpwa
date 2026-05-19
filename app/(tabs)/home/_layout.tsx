@@ -8,7 +8,7 @@ export default function HomeLayout() {
       <Stack.Screen name="attendance" options={{ title: "" }} />
       <Stack.Screen name="leave" options={{ title: "" }} />
       <Stack.Screen name="newsflash" options={{ title: "" }} />
-      <Stack.Screen name="performance" options={{ title: "" }} />
+      <Stack.Screen name="room" options={{ title: "" }} />
     </Stack>
   );
 }

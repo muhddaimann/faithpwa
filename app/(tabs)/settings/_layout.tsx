@@ -3,7 +3,8 @@ import { Stack } from "expo-router";
 export default function SettingsLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="index" options={{ title: "Home" }} />
+      <Stack.Screen name="index" options={{ title: "" }} />
+      <Stack.Screen name="Update" options={{ title: "" }} />
     </Stack>
   );
 }
