@@ -1,5 +1,5 @@
 import api from "./api";
-import { setStoredToken, clearStoredToken } from "../tokenContext";
+import { getToken, saveToken, deleteToken } from "../tokenContext";
 
 export type LoginCredentials = {
   username: string;
@@ -22,7 +22,7 @@ export const login = async (
     const token = response.data.token;
 
     if (typeof token === "string") {
-      await setStoredToken(token);
+      await saveToken(token);
     }
 
     return response.data;
@@ -35,6 +35,6 @@ export const login = async (
 
 export const logout = async (): Promise<void> => {
   try {
-    await clearStoredToken();
+    await deleteToken();
   } catch {}
 };

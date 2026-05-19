@@ -2,7 +2,8 @@ import { Stack, useRouter, useSegments } from "expo-router";
 import { DesignProvider } from "../contexts/designContext";
 import { ThemeProvider } from "../contexts/themeContext";
 import { OverlayProvider } from "../contexts/overlayContext";
-import { AuthProvider, useAuth } from "../contexts/authContext";
+import { AuthProvider } from "../contexts/authContext";
+import { useAuth } from "../hooks/useAuth";
 import { TokenProvider } from "../contexts/tokenContext";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
@@ -14,7 +15,7 @@ import {
   SourceSansPro_700Bold,
 } from "@expo-google-fonts/source-sans-pro";
 import { useEffect } from "react";
-import { View, Platform, useWindowDimensions, ActivityIndicator } from "react-native";
+import { View, Platform, useWindowDimensions } from "react-native";
 import { useTheme } from "react-native-paper";
 import {
   SafeAreaProvider,

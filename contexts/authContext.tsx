@@ -1,60 +1,35 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { useToken } from './tokenContext';
+import React, { createContext, useState, useEffect, useCallback } from 'react';
+import { getToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
-
-type User = {
-  username: string;
-  name: string;
-  staffId: string;
-  designation: string;
-  avatarText: string;
-};
+import { login, logout as apiLogout } from './api/auth';
+import { useStaffStore } from './api/staffStore';
 
 type AuthContextType = {
-  user: User | null;
   isLoading: boolean;
   signIn: (username: string, password: string) => Promise<boolean>;
   signOut: (force?: boolean) => void;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
-  return context;
-};
-
-const DUMMY_USER: User = {
-  username: 'user',
-  name: 'Aiman Hakim',
-  staffId: 'CS1024',
-  designation: 'Customer Service Executive',
-  avatarText: 'AH',
-};
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { getToken, saveToken, deleteToken } = useToken();
+  const { fetchStaff, clear: clearStaff, staff } = useStaffStore();
   const { confirm, toast, showLoader, hideLoader } = useOverlay();
 
   useEffect(() => {
     const loadSession = async () => {
       showLoader("Initializing session...");
       try {
-        const savedUsername = await getToken();
-        if (savedUsername === DUMMY_USER.username) {
-          setUser(DUMMY_USER);
-          toast({
-            message: `Welcome back, ${DUMMY_USER.name}`,
-            variant: "success",
-          });
+        const token = await getToken();
+        if (token) {
+          await fetchStaff();
+          // We can check if fetchStaff succeeded by looking at the store state
+          // but for now, we'll assume if there's a token we try to load.
         }
       } catch (e) {
         console.error("Failed to load session", e);
       } finally {
-        // Add a small delay for smoother transition
         setTimeout(() => {
           hideLoader();
           setIsLoading(false);
@@ -62,34 +37,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     };
     loadSession();
-  }, []);
+  }, [fetchStaff]);
 
   const signIn = async (username: string, password: string) => {
     showLoader("Authenticating...");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    if (username === DUMMY_USER.username && password === "123") {
-      try {
-        await saveToken(username);
-        setUser(DUMMY_USER);
+    
+    try {
+      const result = await login({ username, password });
+      
+      if (result.status === "success") {
+        await fetchStaff();
         hideLoader();
         toast({
-          message: `Welcome, ${DUMMY_USER.name}!`,
+          message: "Welcome back!",
           variant: "success",
         });
         return true;
-      } catch (e) {
+      } else {
         hideLoader();
         toast({
-          message: "Secure storage failed. Please check your device settings.",
+          message: result.message || "Invalid username or password.",
           variant: "error",
         });
         return false;
       }
-    } else {
+    } catch (e: any) {
       hideLoader();
       toast({
-        message: "Invalid username or password. Please try again.",
+        message: "An error occurred during sign in.",
         variant: "error",
       });
       return false;
@@ -99,23 +74,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const performSignOut = useCallback(async () => {
     showLoader("Logging you out...");
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      await deleteToken();
-      setUser(null);
+      await apiLogout();
+      clearStaff();
       hideLoader();
       toast({ 
-        message: 'Successfully logged out. See you soon!', 
+        message: 'Successfully logged out.', 
         variant: 'success' 
       });
     } catch (e) {
       hideLoader();
-      console.error('Failed to delete session', e);
+      console.error('Failed to logout', e);
       toast({ 
-        message: 'Could not complete sign out. Please try again.', 
+        message: 'Could not complete sign out.', 
         variant: 'error' 
       });
     }
-  }, [deleteToken, toast, showLoader, hideLoader]);
+  }, [clearStaff, toast, showLoader, hideLoader]);
 
   const signOut = useCallback((force = false) => {
     if (force) {
@@ -125,7 +99,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     confirm({
       title: 'Sign Out',
-      message: 'Are you sure you want to log out of your account?',
+      message: 'Are you sure you want to log out?',
       confirmText: 'Log Out',
       cancelText: 'Cancel',
       isDestructive: true,
@@ -134,7 +108,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [confirm, performSignOut]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, signIn, signOut }}>
+    <AuthContext.Provider value={{ isLoading, signIn, signOut }}>
       {children}
     </AuthContext.Provider>
   );

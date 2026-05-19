@@ -19,7 +19,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useOverlay } from "../../../contexts/overlayContext";
-import { useAuth } from "../../../contexts/authContext";
+import { useAuth } from "../../../hooks/useAuth";
 import { useAppTheme } from "../../../contexts/themeContext";
 import ScrollTop from "../../../components/scrollTop";
 import Tail from "../../../components/tail";

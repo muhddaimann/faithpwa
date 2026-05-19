@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Text, TextInput, Button, useTheme } from "react-native-paper";
 import { useDesign } from "../contexts/designContext";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../hooks/useAuth";
 
 export default function Login() {
   const [username, setUsername] = useState("");

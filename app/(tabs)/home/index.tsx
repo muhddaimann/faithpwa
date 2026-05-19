@@ -12,7 +12,7 @@ import { useTabs } from "../../../contexts/tabContext";
 import Head from "../../../components/head";
 import SectionHeader from "../../../components/section";
 import { useRouter } from "expo-router";
-import { useAuth } from "../../../contexts/authContext";
+import { useAuth } from "../../../hooks/useAuth";
 import AttendanceCard from "../../../components/attendance/attendanceCard";
 import NewsflashCarousel from "../../../components/newsflash/newsflashCarousel";
 import RowTwo from "../../../components/rowtwo";

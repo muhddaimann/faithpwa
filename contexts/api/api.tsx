@@ -10,8 +10,10 @@ const api = axios.create({
 
 api.interceptors.request.use(
   async (config) => {
+    console.log(`[API Request] ${config.method?.toUpperCase()} ${config.url}`);
     const isConnected = useNetworkStore.getState().isConnected;
     if (isConnected === false) {
+      console.warn('[API Request] Blocked: No internet connection');
       return Promise.reject(new Error('No internet connection'));
     }
 
@@ -21,12 +23,24 @@ api.interceptors.request.use(
     }
     return config;
   },
-  (error) => Promise.reject(error),
+  (error) => {
+    console.error('[API Request Error]', error);
+    return Promise.reject(error);
+  },
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`[API Response] ${response.status} ${response.config.url}`);
+    return response;
+  },
   (error) => {
+    console.error('[API Response Error]', {
+      url: error.config?.url,
+      message: error.message,
+      status: error.response?.status,
+      data: error.response?.data,
+    });
     if (error.response?.status === 401) {
       useSessionStore.getState().setExpired(true);
     }

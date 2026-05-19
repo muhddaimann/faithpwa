@@ -3,7 +3,7 @@ import { Animated, View, Pressable, Easing } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { usePathname, router } from "expo-router";
 import { useDesign } from "../contexts/designContext";
-import { useAuth } from "../contexts/authContext";
+import { useAuth } from "../hooks/useAuth";
 import { useTabs } from "../contexts/tabContext";
 import { useOverlay } from "../contexts/overlayContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
