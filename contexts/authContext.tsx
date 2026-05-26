@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
+import { login as apiLogin } from './api/auth';
 
 type User = {
   username: string;
@@ -21,7 +22,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
 
@@ -43,18 +44,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const loadSession = async () => {
       showLoader("Initializing session...");
       try {
-        const savedUsername = await getToken();
-        if (savedUsername === DUMMY_USER.username) {
-          setUser(DUMMY_USER);
-          toast({
-            message: `Welcome back, ${DUMMY_USER.name}`,
-            variant: "success",
-          });
+        const token = await getToken();
+        if (token) {
+          // In a real app, we would verify the token or fetch the profile here
+          // For now, if we have a token, we'll assume the user is logged in
+          setUser(DUMMY_USER); 
         }
       } catch (e) {
         console.error("Failed to load session", e);
       } finally {
-        // Add a small delay for smoother transition
         setTimeout(() => {
           hideLoader();
           setIsLoading(false);
@@ -66,30 +64,37 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signIn = async (username: string, password: string) => {
     showLoader("Authenticating...");
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    
+    try {
+      const response = await apiLogin({ username, password });
 
-    if (username === DUMMY_USER.username && password === "123") {
-      try {
-        await saveToken(username);
-        setUser(DUMMY_USER);
+      if (response.status === 'success') {
+        setUser({
+          username,
+          name: 'Staff Member', // The login API doesn't return the name yet
+          staffId: response.staff_id?.toString() || 'N/A',
+          designation: 'Staff',
+          avatarText: username.substring(0, 2).toUpperCase(),
+        });
+        
         hideLoader();
         toast({
-          message: `Welcome, ${DUMMY_USER.name}!`,
+          message: `Welcome back!`,
           variant: "success",
         });
         return true;
-      } catch (e) {
+      } else {
         hideLoader();
         toast({
-          message: "Failed to save session. Please check your browser settings.",
+          message: response.message || "Invalid username or password.",
           variant: "error",
         });
         return false;
       }
-    } else {
+    } catch (error) {
       hideLoader();
       toast({
-        message: "Invalid username or password. Please try again.",
+        message: "Network error. Please check your connection.",
         variant: "error",
       });
       return false;

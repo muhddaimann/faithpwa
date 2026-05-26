@@ -1,14 +1,14 @@
 import axios from 'axios';
-import { getToken } from '../tokenContext';
+import { getStoredToken } from '../tokenContext';
 
 const api = axios.create({
-  baseURL: 'https://endpoint.daythree.ai/faithMobile/routes',
-  timeout: 5000,
+  baseURL: process.env.EXPO_PUBLIC_API_URL || '/api',
+  timeout: 10000, // Increased timeout for potentially slow backend
 });
 
 api.interceptors.request.use(
   async (config) => {
-    const token = await getToken();
+    const token = await getStoredToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
