@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-export type NewsflashPriority = "High" | "Medium" | "Low";
+export type NewsflashPriority = "Critical" | "Important" | "Normal";
 
 export type NewsflashItem = {
   id: number;
@@ -11,11 +11,12 @@ export type NewsflashItem = {
   timestamp: string;
 };
 
+// Mock data remains for initial development, but priorities are updated
 export const newsflashes: NewsflashItem[] = [
   {
     id: 1,
     type: "Security Memo",
-    priority: "High",
+    priority: "Critical",
     title: "No Tailgating Entrance",
     content:
       "Employees are reminded not to allow unauthorized individuals to enter behind them when accessing the office premises.",
@@ -25,7 +26,7 @@ export const newsflashes: NewsflashItem[] = [
   {
     id: 2,
     type: "Maintenance",
-    priority: "Medium",
+    priority: "Important",
     title: "Water Disruption at Level 12",
     content:
       "Temporary water supply interruption will occur from 2 PM to 4 PM due to scheduled maintenance works.",
@@ -35,7 +36,7 @@ export const newsflashes: NewsflashItem[] = [
   {
     id: 3,
     type: "IT Notice",
-    priority: "High",
+    priority: "Critical",
     title: "VPN Password Reset Required",
     content:
       "All employees must reset their VPN password before Friday to maintain secure remote access connectivity.",
@@ -45,7 +46,7 @@ export const newsflashes: NewsflashItem[] = [
   {
     id: 4,
     type: "HR Announcement",
-    priority: "Low",
+    priority: "Normal",
     title: "Casual Friday This Week",
     content:
       "Employees are allowed to wear smart casual attire this Friday during the internal appreciation event.",
@@ -55,7 +56,7 @@ export const newsflashes: NewsflashItem[] = [
   {
     id: 5,
     type: "Parking Notice",
-    priority: "Medium",
+    priority: "Important",
     title: "Basement B Closed Tonight",
     content:
       "Basement B parking area will be temporarily closed after 8 PM for cleaning and repainting works.",
@@ -65,7 +66,7 @@ export const newsflashes: NewsflashItem[] = [
   {
     id: 6,
     type: "Safety Reminder",
-    priority: "High",
+    priority: "Critical",
     title: "Fire Drill Tomorrow Morning",
     content:
       "Mandatory fire drill exercise will begin at 10 AM. Please follow evacuation instructions from marshals.",
@@ -75,9 +76,9 @@ export const newsflashes: NewsflashItem[] = [
 
 export const newsflashFilters: (NewsflashPriority | "All")[] = [
   "All",
-  "High",
-  "Medium",
-  "Low",
+  "Critical",
+  "Important",
+  "Normal",
 ];
 
 export const newsflashPriorities: Record<
@@ -89,23 +90,23 @@ export const newsflashPriorities: Record<
     icon: keyof typeof MaterialCommunityIcons.glyphMap;
   }
 > = {
-  High: {
-    label: "High",
-    color: "#F87171",
+  Critical: {
+    label: "Critical",
+    color: "#F87171", // Red
     cardColor: "#7F1D1D",
     icon: "alert",
   },
 
-  Medium: {
-    label: "Medium",
-    color: "#FACC15",
+  Important: {
+    label: "Important",
+    color: "#FACC15", // Yellow
     cardColor: "#854D0E",
     icon: "alert-circle",
   },
 
-  Low: {
-    label: "Low",
-    color: "#4ADE80",
+  Normal: {
+    label: "Normal",
+    color: "#4ADE80", // Green
     cardColor: "#166534",
     icon: "information",
   },

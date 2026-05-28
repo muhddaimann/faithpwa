@@ -3,6 +3,7 @@ import { useToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
 import { login as apiLogin } from './api/auth';
 import { useStaffStore } from './api/staffStore';
+import { useBroadcastStore } from './api/broadcastStore';
 import { StaffResponse } from './api/staff';
 
 type AuthContextType = {
@@ -26,6 +27,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { getToken, saveToken, deleteToken } = useToken();
   const { confirm, toast, showLoader, hideLoader } = useOverlay();
   const clearStaff = useStaffStore((state) => state.clear);
+  const clearBroadcasts = useBroadcastStore((state) => state.clearAll);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -62,6 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (response.status === 'success') {
         clearStaff(); // Clear staff data before new user logs in
+        clearBroadcasts(); // Clear old broadcasts
         
         setUser({
           staff_id: response.staff_id,
@@ -102,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       await deleteToken();
       setUser(null);
       clearStaff(); // Clear staff data on logout
+      clearBroadcasts(); // Clear broadcasts on logout
       hideLoader();
       toast({ 
         message: 'Successfully logged out. See you soon!', 
@@ -115,7 +119,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         variant: 'error' 
       });
     }
-  }, [deleteToken, toast, showLoader, hideLoader, clearStaff]);
+  }, [deleteToken, toast, showLoader, hideLoader, clearStaff, clearBroadcasts]);
 
   const signOut = useCallback((force = false) => {
     if (force) {

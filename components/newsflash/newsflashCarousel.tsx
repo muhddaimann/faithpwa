@@ -10,7 +10,8 @@ import { Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useDesign } from "../../contexts/designContext";
-import { newsflashes, newsflashPriorities } from "../../constants/newsflash";
+import { newsflashPriorities } from "../../constants/newsflash";
+import { useNewsflash } from "../../hooks/useNewsflash";
 
 const { width } = Dimensions.get("window");
 
@@ -22,14 +23,25 @@ export default function NewsflashCarousel() {
   const { colors } = useTheme();
   const tokens = useDesign();
   const router = useRouter();
+  const { broadcasts, loading, showDetails } = useNewsflash(3);
+
+  const normalizePriority = (p?: string): keyof typeof newsflashPriorities => {
+    if (!p) return "Normal";
+    const normalized = p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+    if (normalized === "Critical" || normalized === "Important" || normalized === "Normal") {
+      return normalized as keyof typeof newsflashPriorities;
+    }
+    return "Normal";
+  };
 
   const translateX = useRef(new Animated.Value(0)).current;
   const progress = useRef(new Animated.Value(0)).current;
-  const carouselData = newsflashes.slice(0, 3);
   const [activeIndex, setActiveIndex] = useState(0);
   const [acknowledgedIds, setAcknowledgedIds] = useState<number[]>([]);
 
   useEffect(() => {
+    if (broadcasts.length === 0) return;
+
     // Reset and start progress bar animation
     progress.setValue(0);
     Animated.timing(progress, {
@@ -41,7 +53,7 @@ export default function NewsflashCarousel() {
 
     const interval = setInterval(() => {
       const nextIndex =
-        activeIndex >= carouselData.length - 1 ? 0 : activeIndex + 1;
+        activeIndex >= broadcasts.length - 1 ? 0 : activeIndex + 1;
       const toValue = -nextIndex * (CARD_WIDTH + SPACING);
 
       Animated.timing(translateX, {
@@ -55,7 +67,11 @@ export default function NewsflashCarousel() {
     }, 4000);
 
     return () => clearInterval(interval);
-  }, [activeIndex, carouselData.length]);
+  }, [activeIndex, broadcasts.length]);
+
+  if (loading || broadcasts.length === 0) {
+    return null; // Or a skeleton/placeholder
+  }
 
   return (
     <View
@@ -71,17 +87,19 @@ export default function NewsflashCarousel() {
             transform: [{ translateX }],
           }}
         >
-          {carouselData.map((item, index) => {
-            const priority = newsflashPriorities[item.priority];
-            const acknowledged = acknowledgedIds.includes(item.id);
+          {broadcasts.map((item, index) => {
+            const priorityKey = normalizePriority(item.BroadcastPriority);
+            const priority = newsflashPriorities[priorityKey];
+            const acknowledged = acknowledgedIds.includes(item.broadcast_id);
             const isActive = index === activeIndex;
 
             return (
               <Pressable
-                key={item.id}
+                key={`${item.broadcast_id}-${index}`}
                 onPress={() => {
+                  showDetails(item);
                   if (!acknowledged) {
-                    setAcknowledgedIds((prev) => [...prev, item.id]);
+                    setAcknowledgedIds((prev) => [...prev, item.broadcast_id]);
                   }
                 }}
                 style={({ pressed }) => ({
@@ -143,7 +161,7 @@ export default function NewsflashCarousel() {
                           color: colors.onSurfaceVariant,
                         }}
                       >
-                        {item.type}
+                        {item.BroadcastType}
                       </Text>
                     </View>
 
@@ -162,7 +180,7 @@ export default function NewsflashCarousel() {
                           color: priority.color,
                         }}
                       >
-                        {item.priority}
+                        {item.BroadcastPriority}
                       </Text>
                     </View>
                   </View>
@@ -179,7 +197,7 @@ export default function NewsflashCarousel() {
                         lineHeight: 26,
                       }}
                     >
-                      {item.title}
+                      {item.NewsName}
                     </Text>
 
                     <Text
@@ -191,7 +209,7 @@ export default function NewsflashCarousel() {
                         lineHeight: 22,
                       }}
                     >
-                      {item.content}
+                      {item.Description}
                     </Text>
                   </View>
 
@@ -208,7 +226,7 @@ export default function NewsflashCarousel() {
                         color: colors.onSurfaceVariant,
                       }}
                     >
-                      {acknowledged ? "Acknowledged" : item.timestamp}
+                      {acknowledged ? "Acknowledged" : new Date(item.CreatedDateTime).toLocaleDateString()}
                     </Text>
 
                     <MaterialCommunityIcons

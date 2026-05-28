@@ -5,119 +5,43 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
 import { useOverlay } from "../../contexts/overlayContext";
 import {
-  NewsflashItem,
   NewsflashPriority,
   newsflashFilters,
-  newsflashes,
   newsflashPriorities,
 } from "../../constants/newsflash";
+import { useNewsflash } from "../../hooks/useNewsflash";
+import { type Broadcast } from "../../contexts/api/broadcast";
 
 export default function NewsflashList() {
   const theme = useTheme();
-  const { showSheet } = useOverlay();
   const { spacing, radii } = design;
+  const { broadcasts, loading, showDetails } = useNewsflash();
 
   const [activeFilter, setActiveFilter] = useState<NewsflashPriority | "All">(
     "All"
   );
 
-  const filteredNews = useMemo(() => {
-    if (activeFilter === "All") return newsflashes;
-    return newsflashes.filter((item) => item.priority === activeFilter);
-  }, [activeFilter]);
-
-  const handleShowDetails = (item: NewsflashItem) => {
-    const priority = newsflashPriorities[item.priority];
-
-    showSheet({
-      title: "Announcement Details",
-      content: (
-        <View style={{ gap: spacing.lg, paddingBottom: spacing.lg }}>
-          <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: spacing.md,
-            }}
-          >
-            <View
-              style={{
-                backgroundColor: priority.color + "15",
-                padding: spacing.md,
-                borderRadius: 16,
-              }}
-            >
-              <MaterialCommunityIcons
-                name={priority.icon as any}
-                size={32}
-                color={priority.color}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text variant="titleLarge" style={{ fontWeight: "800" }}>
-                {item.title}
-              </Text>
-              <Text
-                variant="bodyMedium"
-                style={{ color: theme.colors.onSurfaceVariant }}
-              >
-                {item.type} • {item.priority} Priority
-              </Text>
-            </View>
-          </View>
-
-          <Divider />
-
-          <View style={{ gap: spacing.sm }}>
-            <Text
-              variant="labelSmall"
-              style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}
-            >
-              MESSAGE
-            </Text>
-            <View
-              style={{
-                backgroundColor: theme.colors.surfaceVariant + "40",
-                padding: spacing.md,
-                borderRadius: radii.lg,
-              }}
-            >
-              <Text variant="bodyMedium" style={{ lineHeight: 22 }}>
-                {item.content}
-              </Text>
-            </View>
-          </View>
-
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-            <View style={{ gap: 4 }}>
-              <Text
-                variant="labelSmall"
-                style={{
-                  color: theme.colors.onSurfaceVariant,
-                  fontWeight: "700",
-                }}
-              >
-                POSTED
-              </Text>
-              <Text variant="bodyMedium">{item.timestamp}</Text>
-            </View>
-            <View style={{ alignItems: "flex-end", gap: 4 }}>
-              <Text
-                variant="labelSmall"
-                style={{
-                  color: theme.colors.onSurfaceVariant,
-                  fontWeight: "700",
-                }}
-              >
-                REFERENCE ID
-              </Text>
-              <Text variant="bodyMedium">#NF-{item.id.toString().padStart(4, "0")}</Text>
-            </View>
-          </View>
-        </View>
-      ),
-    });
+  const normalizePriority = (p?: string): NewsflashPriority => {
+    if (!p) return "Normal";
+    const normalized = p.charAt(0).toUpperCase() + p.slice(1).toLowerCase();
+    if (normalized === "Critical" || normalized === "Important" || normalized === "Normal") {
+      return normalized as NewsflashPriority;
+    }
+    return "Normal";
   };
+
+  const filteredNews = useMemo(() => {
+    if (activeFilter === "All") return broadcasts;
+    return broadcasts.filter((item) => normalizePriority(item.BroadcastPriority) === activeFilter);
+  }, [activeFilter, broadcasts]);
+
+  if (loading && broadcasts.length === 0) {
+    return (
+      <View style={{ padding: spacing.xl, alignItems: "center" }}>
+        <Text>Loading announcements...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ gap: spacing.md }}>
@@ -166,14 +90,15 @@ export default function NewsflashList() {
       </ScrollView>
 
       <View style={{ gap: spacing.sm }}>
-        {filteredNews.map((item) => {
-          const priority = newsflashPriorities[item.priority];
+        {filteredNews.map((item, index) => {
+          const priorityKey = normalizePriority(item.BroadcastPriority);
+          const priority = newsflashPriorities[priorityKey];
 
           return (
             <TouchableOpacity
-              key={item.id}
+              key={`${item.broadcast_id}-${index}`}
               activeOpacity={0.7}
-              onPress={() => handleShowDetails(item)}
+              onPress={() => showDetails(item)}
               style={{
                 borderRadius: 28,
                 padding: spacing.lg,
@@ -234,7 +159,7 @@ export default function NewsflashList() {
                       letterSpacing: 0.5,
                     }}
                   >
-                    {item.priority.toUpperCase()}
+                    {item.BroadcastPriority.toUpperCase()}
                   </Text>
                 </View>
 
@@ -245,7 +170,7 @@ export default function NewsflashList() {
                     fontWeight: "600",
                   }}
                 >
-                  {item.timestamp}
+                  {new Date(item.CreatedDateTime).toLocaleDateString()}
                 </Text>
               </View>
 
@@ -257,7 +182,7 @@ export default function NewsflashList() {
                     color: theme.colors.onSurface,
                   }}
                 >
-                  {item.title}
+                  {item.NewsName}
                 </Text>
                 <Text
                   style={{
@@ -267,7 +192,7 @@ export default function NewsflashList() {
                     fontWeight: "600",
                   }}
                 >
-                  {item.type}
+                  {item.BroadcastType}
                 </Text>
               </View>
             </TouchableOpacity>
