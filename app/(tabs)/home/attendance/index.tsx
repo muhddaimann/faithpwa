@@ -8,12 +8,7 @@ import {
 } from "react-native";
 import {
   Text,
-  Button,
-  Card,
   useTheme,
-  Divider,
-  Icon,
-  Avatar,
 } from "react-native-paper";
 import { useDesign } from "../../../../contexts/designContext";
 import { useTabs } from "../../../../contexts/tabContext";
@@ -23,14 +18,14 @@ import ScrollTop from "../../../../components/scrollTop";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import AttendanceOverview from "../../../../components/attendance/attendaceOverview";
 import AttendanceInsight from "../../../../components/attendance/attendaceInsight";
+import { useAttendance } from "../../../../hooks/useAttendance";
 
 export default function Attendance() {
   const theme = useTheme();
   const tokens = useDesign();
   const { setHideTabBar } = useTabs();
-  const { toast, performRefresh, confirm } = useOverlay();
-  const [isClockedIn, setIsClockedIn] = useState(false);
-  const [clockInTime, setClockInTime] = useState<string | null>(null);
+  const { toast, performRefresh } = useOverlay();
+  const { refreshAttendance } = useAttendance();
   const scrollViewRef = useRef<ScrollView | null>(null);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [view, setView] = useState<"Weekly" | "Monthly">("Weekly");
@@ -42,7 +37,7 @@ export default function Attendance() {
 
   const handleRefresh = async () => {
     await performRefresh(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await refreshAttendance();
       toast({
         message: "Attendance logs updated",
         variant: "success",

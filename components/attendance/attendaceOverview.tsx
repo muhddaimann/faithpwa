@@ -1,67 +1,83 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Pressable, View } from "react-native";
-import { Card, Text, useTheme, Avatar } from "react-native-paper";
+import { Pressable, View, ActivityIndicator } from "react-native";
+import { Card, Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
-import {
-  AttendanceDay,
-  AttendanceStatus,
-  weeklyAttendanceData,
-  monthlyAttendanceData,
-} from "../../constants/attendance";
+import { useAttendance } from "../../hooks/useAttendance";
+import { getStatusFromRecord, attendanceStatuses } from "../../constants/attendance";
+import NoData from "../noData";
 
 export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly" }) {
   const theme = useTheme();
-  const today = 19; // Today's date based on session context
+  const { records, loading, noRecords } = useAttendance();
+  const { spacing, radii, elevation } = design;
 
-  const { spacing, radii, typography, sizes, elevation, opacity } = design;
+  const today = new Date();
+  const todayDate = today.getDate();
 
-  const data = useMemo(
-    () => (view === "Weekly" ? weeklyAttendanceData : monthlyAttendanceData),
-    [view],
-  );
+  const data = useMemo(() => {
+    // Map API records to UI format
+    return records.map(record => {
+      const d = new Date(record.schedule_date);
+      const statusKey = getStatusFromRecord(record);
+      const statusInfo = attendanceStatuses[statusKey];
+      
+      return {
+        ...record,
+        date: d.getDate(),
+        month: d.toLocaleString('default', { month: 'short' }),
+        day: d.toLocaleDateString('en-US', { weekday: 'short' }),
+        displayStatus: statusInfo.label,
+        color: statusInfo.dotColor,
+        cardColor: statusInfo.cardColor,
+        icon: statusInfo.icon,
+        checkIn: record.actual_login || record.original_login || "--",
+        checkOut: record.actual_logout || record.original_logout || "--",
+        workingHours: record.login_difference || "--", // Or calculate from login/logout
+      };
+    }).sort((a, b) => new Date(a.schedule_date).getTime() - new Date(b.schedule_date).getTime());
+  }, [records]);
 
-  const [selected, setSelected] = useState<AttendanceDay>(() => {
-    return (
-      weeklyAttendanceData.find((item) => item.date === today) ||
-      weeklyAttendanceData[0]
-    );
-  });
+  const displayedData = useMemo(() => {
+    if (view === "Weekly") {
+      // Show last 7 days or current week
+      return data.slice(-7);
+    }
+    return data;
+  }, [data, view]);
+
+  const [selected, setSelected] = useState<any>(null);
 
   useEffect(() => {
-    const todayItem = data.find((item) => item.date === today);
-    setSelected(todayItem || data[0]);
-  }, [view, data]);
-
-  const firstDayOffset = 4;
-
-  const calendarData = [
-    ...Array.from({ length: firstDayOffset }).map((_, index) => ({
-      id: `empty-${index}`,
-      empty: true,
-    })),
-    ...monthlyAttendanceData.map((item) => ({
-      ...item,
-      empty: false,
-    })),
-  ];
-
-  const getStatusColor = (status: AttendanceStatus) => {
-    switch (status) {
-      case "Present":
-        return "#22C55E";
-      case "Late":
-        return "#F59E0B";
-      case "Absent":
-        return "#EF4444";
-      case "Leave":
-        return "#8B5CF6";
-      case "Weekend":
-        return theme.colors.outline;
-      default:
-        return theme.colors.primary;
+    if (data.length > 0 && !selected) {
+      const todayItem = data.find((item) => item.date === todayDate);
+      setSelected(todayItem || data[data.length - 1]);
     }
-  };
+  }, [data, todayDate, selected]);
+
+  if (loading && records.length === 0) {
+    return (
+      <View style={{ height: 300, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (noRecords) {
+    return (
+      <Card style={{ borderRadius: 28, padding: 24, backgroundColor: theme.colors.surface }}>
+        <NoData 
+          title="No Logs Found" 
+          description="We couldn't find any attendance logs for your account. This is normal for management and non-shift roles."
+          icon="calendar-blank"
+        />
+      </Card>
+    );
+  }
+
+  if (!selected) return null;
+
+  const firstDayOffset = data.length > 0 ? new Date(data[0].schedule_date).getDay() - 1 : 0;
 
   return (
     <Card
@@ -72,16 +88,15 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
         backgroundColor: theme.colors.surface,
       }}
     >
-      {/* Top Section - Status Detail (Glassmorphism Style) */}
+      {/* Top Section - Status Detail */}
       <View
         style={{
-          backgroundColor: getStatusColor(selected.status),
+          backgroundColor: selected.cardColor,
           padding: spacing.lg,
           gap: spacing.md,
           overflow: "hidden",
         }}
       >
-        {/* Background Decorative Icons */}
         <View
           style={{
             position: "absolute",
@@ -91,93 +106,41 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
             transform: [{ rotate: "-12deg" }],
           }}
         >
-          <MaterialCommunityIcons
-            name={
-              selected.status === "Present"
-                ? "check-decagram"
-                : selected.status === "Late"
-                ? "clock-alert"
-                : selected.status === "Absent"
-                ? "close-octagon"
-                : selected.status === "Weekend"
-                ? "sofa"
-                : "calendar"
-            }
-            size={140}
-            color="#FFF"
-          />
+          <MaterialCommunityIcons name={selected.icon} size={140} color="#FFF" />
         </View>
 
-        <View
-          style={{
-            position: "absolute",
-            bottom: -20,
-            left: -20,
-            opacity: 0.05,
-            transform: [{ rotate: "8deg" }],
-          }}
-        >
-          <MaterialCommunityIcons
-            name="clock-outline"
-            size={120}
-            color="#FFF"
-          />
-        </View>
+        <View style={{ flex: 1 }}>
+          <Text
+            variant="titleLarge"
+            style={{ color: "#FFF", fontWeight: "800" }}
+          >
+            {selected.day}, {selected.date} {selected.month}
+          </Text>
 
-        <View
-          style={{
-            flexDirection: "row",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-          }}
-        >
-          <View style={{ flex: 1 }}>
+          <View
+            style={{
+              alignSelf: "flex-start",
+              paddingHorizontal: 8,
+              paddingVertical: 4,
+              borderRadius: radii.full,
+              backgroundColor: "rgba(255,255,255,0.15)",
+              marginTop: 8,
+            }}
+          >
             <Text
-              variant="titleLarge"
-              style={{
-                color: "#FFF",
-                fontWeight: "800",
-              }}
+              variant="labelSmall"
+              style={{ color: "#FFF", fontWeight: "700" }}
             >
-              {selected.day
-                ? `${selected.day}, ${selected.date} May`
-                : `${selected.date} May`}
+              {selected.displayStatus.toUpperCase()}
             </Text>
-
-            <View
-              style={{
-                alignSelf: "flex-start",
-                paddingHorizontal: 8,
-                paddingVertical: 4,
-                borderRadius: radii.full,
-                backgroundColor: "rgba(255,255,255,0.15)",
-                marginTop: 8,
-              }}
-            >
-              <Text
-                variant="labelSmall"
-                style={{
-                  color: "#FFF",
-                  fontWeight: "700",
-                }}
-              >
-                {selected.status.toUpperCase()}
-              </Text>
-            </View>
           </View>
         </View>
 
-        <View
-          style={{
-            flexDirection: "row",
-            gap: spacing.sm,
-            marginTop: spacing.xs,
-          }}
-        >
+        <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs }}>
           {[
-            { label: "Check In", value: selected.checkIn || "--" },
-            { label: "Check Out", value: selected.checkOut || "--" },
-            { label: "Hours", value: selected.workingHours || "--" },
+            { label: "Check In", value: selected.checkIn },
+            { label: "Check Out", value: selected.checkOut },
+            { label: "Diff", value: selected.login_difference || "--" },
           ].map((item, idx) => (
             <View
               key={idx}
@@ -189,22 +152,10 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
                 gap: 4,
               }}
             >
-              <Text
-                variant="bodySmall"
-                style={{
-                  color: "rgba(255,255,255,0.7)",
-                }}
-              >
+              <Text variant="bodySmall" style={{ color: "rgba(255,255,255,0.7)" }}>
                 {item.label}
               </Text>
-
-              <Text
-                variant="titleSmall"
-                style={{
-                  color: "#FFF",
-                  fontWeight: "800",
-                }}
-              >
+              <Text variant="titleSmall" style={{ color: "#FFF", fontWeight: "800" }}>
                 {item.value}
               </Text>
             </View>
@@ -212,31 +163,20 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
         </View>
       </View>
 
-      {/* Bottom Section - Interactive Selection (Calendar/List) */}
+      {/* Bottom Section - Selection */}
       <View style={{ padding: spacing.md }}>
         {view === "Weekly" ? (
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "space-between",
-              gap: spacing.sm,
-            }}
-          >
-            {weeklyAttendanceData.map((item) => {
-              const active = selected.date === item.date;
-              const isToday = item.date === today;
+          <View style={{ flexDirection: "row", justifyContent: "space-between", gap: spacing.sm }}>
+            {displayedData.map((item) => {
+              const active = selected.attendance_id === item.attendance_id;
+              const isToday = item.date === todayDate;
               return (
-                <View
-                  key={item.date}
-                  style={{ flex: 1, alignItems: "center", gap: spacing.xs }}
-                >
+                <View key={item.attendance_id} style={{ flex: 1, alignItems: "center", gap: spacing.xs }}>
                   <Text
                     style={{
                       fontSize: 12,
                       fontWeight: isToday ? "900" : "700",
-                      color: isToday
-                        ? theme.colors.primary
-                        : theme.colors.onSurfaceVariant,
+                      color: isToday ? theme.colors.primary : theme.colors.onSurfaceVariant,
                       opacity: isToday ? 1 : 0.6,
                     }}
                   >
@@ -249,22 +189,16 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
                       alignItems: "center",
                       paddingVertical: spacing.md,
                       borderRadius: radii.xl,
-                      backgroundColor: active
-                        ? theme.colors.primary
-                        : theme.colors.background,
+                      backgroundColor: active ? theme.colors.primary : theme.colors.background,
                       borderWidth: isToday ? 2 : 0,
-                      borderColor: active
-                        ? "rgba(255,255,255,0.5)"
-                        : theme.colors.primary,
+                      borderColor: active ? "rgba(255,255,255,0.5)" : theme.colors.primary,
                     }}
                   >
                     <Text
                       style={{
                         fontSize: 18,
                         fontWeight: "800",
-                        color: active
-                          ? theme.colors.onPrimary
-                          : theme.colors.onSurface,
+                        color: active ? theme.colors.onPrimary : theme.colors.onSurface,
                       }}
                     >
                       {item.date}
@@ -275,9 +209,7 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
                         height: 6,
                         borderRadius: 3,
                         marginTop: 8,
-                        backgroundColor: active
-                          ? theme.colors.onPrimary
-                          : getStatusColor(item.status),
+                        backgroundColor: active ? theme.colors.onPrimary : item.color,
                       }}
                     />
                   </Pressable>
@@ -289,69 +221,52 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
           <View style={{ gap: spacing.md }}>
             <View style={{ flexDirection: "row" }}>
               {["M", "T", "W", "T", "F", "S", "S"].map((day, i) => (
-                <View
-                  key={i}
-                  style={{ width: `${100 / 7}%`, alignItems: "center" }}
-                >
-                  <Text
-                    variant="labelSmall"
-                    style={{ opacity: 0.5, fontWeight: "700" }}
-                  >
-                    {day}
-                  </Text>
+                <View key={i} style={{ width: `${100 / 7}%`, alignItems: "center" }}>
+                  <Text variant="labelSmall" style={{ opacity: 0.5, fontWeight: "700" }}>{day}</Text>
                 </View>
               ))}
             </View>
             <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-              {calendarData.map((item: any, index) => {
-                const isToday = !item.empty && item.date === today;
-                const active = !item.empty && selected.date === item.date;
+              {Array.from({ length: firstDayOffset }).map((_, i) => (
+                <View key={`empty-${i}`} style={{ width: `${100 / 7}%`, padding: 2, aspectRatio: 1 }} />
+              ))}
+              {data.map((item) => {
+                const isToday = item.date === todayDate;
+                const active = selected.attendance_id === item.attendance_id;
 
                 return (
-                  <View key={index} style={{ width: `${100 / 7}%`, padding: 2 }}>
-                    {!item.empty ? (
-                      <Pressable
-                        onPress={() => setSelected(item)}
+                  <View key={item.attendance_id} style={{ width: `${100 / 7}%`, padding: 2 }}>
+                    <Pressable
+                      onPress={() => setSelected(item)}
+                      style={{
+                        aspectRatio: 1,
+                        borderRadius: radii.lg,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: active ? theme.colors.primary : theme.colors.background,
+                        borderWidth: isToday ? 2 : 0,
+                        borderColor: active ? "rgba(255,255,255,0.5)" : theme.colors.primary,
+                      }}
+                    >
+                      <Text
                         style={{
-                          aspectRatio: 1,
-                          borderRadius: radii.lg,
-                          alignItems: "center",
-                          justifyContent: "center",
-                          backgroundColor: active
-                            ? theme.colors.primary
-                            : theme.colors.background,
-                          borderWidth: isToday ? 2 : 0,
-                          borderColor: active
-                            ? "rgba(255,255,255,0.5)"
-                            : theme.colors.primary,
+                          fontSize: 14,
+                          fontWeight: "700",
+                          color: active ? theme.colors.onPrimary : theme.colors.onSurface,
                         }}
                       >
-                        <Text
-                          style={{
-                            fontSize: 14,
-                            fontWeight: "700",
-                            color: active
-                              ? theme.colors.onPrimary
-                              : theme.colors.onSurface,
-                          }}
-                        >
-                          {item.date}
-                        </Text>
-                        <View
-                          style={{
-                            width: 4,
-                            height: 4,
-                            borderRadius: 2,
-                            marginTop: 4,
-                            backgroundColor: active
-                              ? theme.colors.onPrimary
-                              : getStatusColor(item.status),
-                          }}
-                        />
-                      </Pressable>
-                    ) : (
-                      <View style={{ aspectRatio: 1 }} />
-                    )}
+                        {item.date}
+                      </Text>
+                      <View
+                        style={{
+                          width: 4,
+                          height: 4,
+                          borderRadius: 2,
+                          marginTop: 4,
+                          backgroundColor: active ? theme.colors.onPrimary : item.color,
+                        }}
+                      />
+                    </Pressable>
                   </View>
                 );
               })}

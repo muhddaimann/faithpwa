@@ -1,34 +1,94 @@
-import React, { useState } from "react";
-import { View, Pressable } from "react-native";
-import { Text, useTheme } from "react-native-paper";
+import React from "react";
+import { View } from "react-native";
+import { Text, useTheme, ActivityIndicator } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../contexts/designContext";
-import { attendance, attendanceStatuses } from "../../constants/attendance";
+import { attendanceStatuses, getStatusFromRecord } from "../../constants/attendance";
+import { useAttendance } from "../../hooks/useAttendance";
+import { useStaff } from "../../hooks/useStaff";
 
 export default function AttendanceCard() {
   const { colors } = useTheme();
   const tokens = useDesign();
+  const { records, stats, loading, noRecords } = useAttendance();
+  const { staff } = useStaff();
 
   const today = new Date();
-
-  const date = today.toLocaleDateString("en-US", {
+  const dateStr = today.toLocaleDateString("en-US", {
     weekday: "long",
     day: "numeric",
     month: "long",
   });
 
-  const statusKeys = Object.keys(attendanceStatuses);
+  if (loading && records.length === 0) {
+    return (
+      <View style={{ 
+        height: 220, 
+        backgroundColor: colors.surfaceVariant + '40', 
+        borderRadius: 28, 
+        justifyContent: 'center', 
+        alignItems: 'center' 
+      }}>
+        <ActivityIndicator color={colors.primary} />
+      </View>
+    );
+  }
 
-  const [currentStatus, setCurrentStatus] = useState(attendance.currentStatus);
+  if (noRecords) {
+    return (
+      <View
+        style={{
+          backgroundColor: colors.surfaceVariant,
+          borderRadius: 28,
+          padding: tokens.spacing.lg,
+          gap: tokens.spacing.md,
+          overflow: "hidden",
+          minHeight: 180,
+          justifyContent: 'center'
+        }}
+      >
+        <View
+          style={{
+            position: "absolute",
+            top: -20,
+            right: -10,
+            opacity: 0.05,
+            transform: [{ rotate: "-15deg" }],
+          }}
+        >
+          <MaterialCommunityIcons
+            name="shield-check"
+            size={160}
+            color={colors.primary}
+          />
+        </View>
 
-  const status = attendanceStatuses[currentStatus];
+        <View style={{ flex: 1, zIndex: 1 }}>
+          <Text variant="titleLarge" style={{ fontWeight: "800", color: colors.onSurface }}>{dateStr}</Text>
+          <Text variant="bodyLarge" style={{ color: colors.onSurfaceVariant, marginTop: 4 }}>
+            {staff?.department_name || "Management"}
+          </Text>
+        </View>
+        
+        <View style={{ 
+          backgroundColor: colors.surface + '90', 
+          padding: 16, 
+          borderRadius: 20,
+          zIndex: 1,
+          borderWidth: 1,
+          borderColor: colors.outline + '20'
+        }}>
+          <Text variant="bodyMedium" style={{ color: colors.onSurface, fontWeight: '600', lineHeight: 20 }}>
+            Attendance tracking is not required for your role. Enjoy your day!
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
-  const handleNextStatus = () => {
-    const currentIndex = statusKeys.indexOf(currentStatus);
-    const nextIndex = (currentIndex + 1) % statusKeys.length;
-
-    setCurrentStatus(statusKeys[nextIndex]);
-  };
+  const todayRecord = stats.todayRecord;
+  const statusKey = getStatusFromRecord(todayRecord);
+  const status = attendanceStatuses[statusKey];
 
   return (
     <View
@@ -88,7 +148,7 @@ export default function AttendanceCard() {
               fontWeight: "800",
             }}
           >
-            {date}
+            {dateStr}
           </Text>
 
           <Text
@@ -98,44 +158,37 @@ export default function AttendanceCard() {
               marginTop: 4,
             }}
           >
-            {attendance.department}
+            {staff?.department_name || "Digital Project"}
           </Text>
         </View>
 
-        <Pressable
-          onPress={handleNextStatus}
-          style={({ pressed }) => ({
-            opacity: pressed ? 0.7 : 1,
-          })}
+        <View
+          style={{
+            paddingHorizontal: tokens.spacing.sm,
+            paddingVertical: 6,
+            borderRadius: tokens.radii.full,
+            backgroundColor: "rgba(255,255,255,0.12)",
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 5,
+          }}
         >
-          <View
+          <MaterialCommunityIcons
+            name={status.icon}
+            size={13}
+            color={status.dotColor}
+          />
+
+          <Text
+            variant="labelMedium"
             style={{
-              paddingHorizontal: tokens.spacing.sm,
-              paddingVertical: 6,
-              borderRadius: tokens.radii.full,
-              backgroundColor: "rgba(255,255,255,0.12)",
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 5,
+              color: colors.onPrimary,
+              fontWeight: "700",
             }}
           >
-            <MaterialCommunityIcons
-              name={status.icon}
-              size={13}
-              color={status.dotColor}
-            />
-
-            <Text
-              variant="labelMedium"
-              style={{
-                color: colors.onPrimary,
-                fontWeight: "700",
-              }}
-            >
-              {status.label}
-            </Text>
-          </View>
-        </Pressable>
+            {status.label}
+          </Text>
+        </View>
       </View>
 
       {status.showShift ? (
@@ -160,7 +213,7 @@ export default function AttendanceCard() {
                 color: "rgba(255,255,255,0.65)",
               }}
             >
-              Shift Start
+              Check In
             </Text>
 
             <Text
@@ -170,7 +223,7 @@ export default function AttendanceCard() {
                 fontWeight: "800",
               }}
             >
-              {attendance.shiftStart}
+              {todayRecord?.actual_login || todayRecord?.original_login || "--:--"}
             </Text>
           </View>
 
@@ -189,7 +242,7 @@ export default function AttendanceCard() {
                 color: "rgba(255,255,255,0.65)",
               }}
             >
-              Shift End
+              Check Out
             </Text>
 
             <Text
@@ -199,7 +252,7 @@ export default function AttendanceCard() {
                 fontWeight: "800",
               }}
             >
-              {attendance.shiftEnd}
+              {todayRecord?.actual_logout || todayRecord?.original_logout || "--:--"}
             </Text>
           </View>
         </View>
@@ -218,7 +271,7 @@ export default function AttendanceCard() {
               lineHeight: 24,
             }}
           >
-            {status.message}
+            {status.message || "No shift scheduled for today."}
           </Text>
         </View>
       )}

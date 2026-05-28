@@ -1,19 +1,63 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { View } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
-
-const recommendation = {
-  title: "Smart Recommendation",
-  description:
-    "Frequent late arrivals detected on Tuesdays between 8:50AM - 9:10AM. Consider flexible check-in or earlier commute timing.",
-  icon: "creation-outline",
-  color: "#8B5CF6",
-};
+import { useAttendance } from "../../hooks/useAttendance";
 
 export default function AttendanceInsight() {
   const { spacing, radii, typography } = design;
+  const { records, stats, noRecords } = useAttendance();
+
+  const insightData = useMemo(() => {
+    if (records.length === 0) return null;
+
+    const rate = Math.round((stats.presentCount / records.filter(r => r.status !== 'RD').length) * 100);
+    
+    // Calculate streak
+    let streak = 0;
+    const sorted = [...records].sort((a, b) => new Date(b.schedule_date).getTime() - new Date(a.schedule_date).getTime());
+    for (const r of sorted) {
+      if (r.login_status !== 'false' && r.status !== 'RD') {
+        streak++;
+      } else if (r.status === 'RD') {
+        continue;
+      } else {
+        break;
+      }
+    }
+
+    return {
+      rate: isNaN(rate) ? 0 : rate,
+      lateCount: stats.lateCount,
+      streak,
+    };
+  }, [records, stats]);
+
+  if (noRecords) {
+    return (
+      <View style={{ gap: spacing.md, opacity: 0.8 }}>
+        <Text style={{ fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, opacity: 0.5, letterSpacing: 1 }}>
+          ATTENDANCE INSIGHTS
+        </Text>
+        <View style={{ padding: 24, borderRadius: 28, backgroundColor: '#6366F108', borderWidth: 1, borderColor: '#6366F115', alignItems: 'center', gap: 12 }}>
+          <MaterialCommunityIcons name="chart-box-outline" size={48} color="#6366F140" />
+          <Text style={{ textAlign: 'center', opacity: 0.6 }}>Insights will appear once attendance logs are available for your account.</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (!insightData) return null;
+
+  const recommendation = {
+    title: "Smart Recommendation",
+    description: insightData.lateCount > 0 
+      ? `Punctuality improvement needed. You have been late ${insightData.lateCount} days this month. Consider earlier commute timing.`
+      : "Excellent consistency! Maintain your current commute schedule to keep your streak going.",
+    icon: "creation-outline",
+    color: insightData.lateCount > 2 ? "#EF4444" : "#8B5CF6",
+  };
 
   return (
     <View
@@ -82,7 +126,7 @@ export default function AttendanceInsight() {
                 color: "#6366F1",
               }}
             >
-              96%
+              {insightData.rate}%
             </Text>
           </View>
 
@@ -93,7 +137,9 @@ export default function AttendanceInsight() {
               lineHeight: 22,
             }}
           >
-            Excellent monthly consistency and punctuality trend.
+            {insightData.rate > 90 
+              ? "Excellent monthly consistency and punctuality trend." 
+              : "Consider improving your daily check-in consistency."}
           </Text>
         </View>
 
@@ -148,7 +194,7 @@ export default function AttendanceInsight() {
                 color: "#F59E0B",
               }}
             >
-              3
+              {insightData.lateCount}
             </Text>
 
             <Text
@@ -206,7 +252,7 @@ export default function AttendanceInsight() {
                 color: "#22C55E",
               }}
             >
-              12
+              {insightData.streak}
             </Text>
 
             <Text
@@ -278,7 +324,7 @@ export default function AttendanceInsight() {
                 lineHeight: 30,
               }}
             >
-              Improve Tuesday punctuality with flexible check-in timing.
+              {insightData.lateCount > 0 ? "Improve punctuality with earlier commute." : "Keep up the excellent punctuality!"}
             </Text>
 
             <Text
@@ -289,8 +335,7 @@ export default function AttendanceInsight() {
                 opacity: 0.78,
               }}
             >
-              Frequent late arrivals detected between 8:50AM - 9:10AM during
-              morning commute hours.
+              {recommendation.description}
             </Text>
           </View>
 

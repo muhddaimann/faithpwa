@@ -2,22 +2,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export type AttendanceStatus = "Present" | "Late" | "Absent" | "Leave" | "Weekend";
 
-export type AttendanceDay = {
-  date: number;
-  day: string;
-  status: AttendanceStatus;
-  checkIn?: string;
-  checkOut?: string;
-  workingHours?: string;
-};
-
-export const attendance = {
-  department: "CelcomDigi Project",
-  shiftStart: "9:00 AM",
-  shiftEnd: "6:00 PM",
-  currentStatus: "working",
-};
-
 export const attendanceStatuses: Record<
   string,
   {
@@ -37,12 +21,37 @@ export const attendanceStatuses: Record<
     showShift: true,
   },
 
+  present: {
+    label: "Present",
+    dotColor: "#4ADE80",
+    cardColor: "#166534",
+    icon: "check-circle",
+    showShift: true,
+  },
+
+  late: {
+    label: "Late",
+    dotColor: "#FB923C",
+    cardColor: "#9A3412",
+    icon: "clock-alert",
+    showShift: true,
+  },
+
   absent: {
     label: "Absent",
     dotColor: "#F87171",
     cardColor: "#991B1B",
     icon: "close-circle",
     message: "You are marked absent today.",
+    showShift: false,
+  },
+
+  weekend: {
+    label: "Rest Day",
+    dotColor: "#94A3B8",
+    cardColor: "#334155",
+    icon: "calendar-blank",
+    message: "It's your rest day. Enjoy your weekend!",
     showShift: false,
   },
 
@@ -74,65 +83,23 @@ export const attendanceStatuses: Record<
   },
 };
 
-export const weeklyAttendanceData: AttendanceDay[] = [
-  {
-    date: 18,
-    day: "Mon",
-    status: "Present",
-    checkIn: "8:55 AM",
-    checkOut: "5:30 PM",
-    workingHours: "8h 35m",
-  },
-  {
-    date: 19,
-    day: "Tue",
-    status: "Late",
-    checkIn: "9:12 AM",
-    checkOut: "5:30 PM",
-    workingHours: "8h 18m",
-  },
-  {
-    date: 20,
-    day: "Wed",
-    status: "Present",
-    checkIn: "8:47 AM",
-    checkOut: "5:34 PM",
-    workingHours: "8h 47m",
-  },
-  {
-    date: 21,
-    day: "Thu",
-    status: "Absent",
-  },
-  {
-    date: 22,
-    day: "Fri",
-    status: "Present",
-    checkIn: "8:58 AM",
-    checkOut: "5:28 PM",
-    workingHours: "8h 30m",
-  },
-  {
-    date: 23,
-    day: "Sat",
-    status: "Weekend",
-  },
-  {
-    date: 24,
-    day: "Sun",
-    status: "Weekend",
-  },
-];
+export const getStatusFromRecord = (record: any) => {
+  if (!record) return "working";
 
-export const monthlyAttendanceData: AttendanceDay[] = Array.from({ length: 31 }).map(
-  (_, index) => ({
-    date: index + 1,
-    day: "",
-    status:
-      index % 7 === 5 || index % 7 === 6
-        ? "Weekend"
-        : index % 5 === 0
-          ? "Late"
-          : "Present",
-  }),
-);
+  // Map API status codes
+  if (record.status === 'RD') return "weekend";
+  if (record.status === 'AL') return "annualLeave";
+  if (record.status === 'SL' || record.status === 'MC') return "sickLeave";
+  if (record.status === 'PH') return "publicHoliday";
+
+  // Check login status for attendance
+  if (record.login_status === 'late') return "late";
+  if (record.login_status === 'exact' || record.login_status === 'early') return "present";
+  
+  // If not clocked in but supposed to
+  if (record.login_status === 'false' && record.status === 'Re') {
+    return "working";
+  }
+
+  return "working";
+};

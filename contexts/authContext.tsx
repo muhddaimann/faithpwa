@@ -6,6 +6,7 @@ import { useStaffStore } from './api/staffStore';
 import { useBroadcastStore } from './api/broadcastStore';
 import { useLeaveStore } from './api/leaveStore';
 import { useRoomStore } from './api/roomStore';
+import { useAttendanceStore } from './api/attendanceStore';
 import { StaffResponse } from './api/staff';
 
 type AuthContextType = {
@@ -32,6 +33,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const clearBroadcasts = useBroadcastStore((state) => state.clearAll);
   const clearLeaves = useLeaveStore((state) => state.clear);
   const clearRooms = useRoomStore((state) => state.clear);
+  const clearAttendance = useAttendanceStore((state) => state.clear);
 
   useEffect(() => {
     const loadSession = async () => {
@@ -71,6 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         clearBroadcasts(); // Clear old broadcasts
         clearLeaves(); // Clear old leaves
         clearRooms(); // Clear old rooms
+        clearAttendance(); // Clear old attendance
         
         setUser({
           staff_id: response.staff_id,
@@ -114,6 +117,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       clearBroadcasts(); // Clear broadcasts on logout
       clearLeaves(); // Clear leaves on logout
       clearRooms(); // Clear rooms on logout
+      clearAttendance(); // Clear attendance on logout
       hideLoader();
       toast({ 
         message: 'Successfully logged out. See you soon!', 
@@ -127,7 +131,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         variant: 'error' 
       });
     }
-  }, [deleteToken, toast, showLoader, hideLoader, clearStaff, clearBroadcasts, clearLeaves, clearRooms]);
+  }, [deleteToken, toast, showLoader, hideLoader, clearStaff, clearBroadcasts, clearLeaves, clearRooms, clearAttendance]);
 
   const signOut = useCallback((force = false) => {
     if (force) {
