@@ -1,105 +1,26 @@
-export const ROOMS = [
-  {
-    id: "emerald-12-a",
-    tower: "Emerald Tower",
-    level: "Level 12",
-    name: "Meeting Room A",
-    code: "EM-12-A",
-    capacity: 8,
-    type: "meeting",
-    status: "available",
-    availability: "Available until 3:00 PM",
-    amenities: [
-      "Projector",
-      "TV",
-      "Whiteboard",
-      "Video Conference",
-    ],
-  },
+export type RoomType = "meeting" | "discussion" | "training" | "focus" | "board" | "huddle";
 
-  {
-    id: "emerald-12-b",
-    tower: "Emerald Tower",
-    level: "Level 12",
-    name: "Discussion Room B",
-    code: "EM-12-B",
-    capacity: 4,
-    type: "discussion",
-    status: "occupied",
-    availability: "Busy until 1:30 PM",
-    amenities: [
-      "Monitor",
-      "Speaker",
-      "Glass Board",
-    ],
-  },
+export const ROOM_TYPE_LABELS: Record<RoomType, string> = {
+  meeting: "Meeting Room",
+  discussion: "Discussion Room",
+  training: "Training Room",
+  focus: "Focus Pod",
+  board: "Board Room",
+  huddle: "Huddle Space",
+};
 
-  {
-    id: "sapphire-15-training",
-    tower: "Sapphire Tower",
-    level: "Level 15",
-    name: "Training Room",
-    code: "SP-15-TR",
-    capacity: 20,
-    type: "training",
-    status: "reserved",
-    availability: "Reserved at 2:00 PM",
-    amenities: [
-      "Projector",
-      "Microphone",
-      "Stage",
-      "PA System",
-    ],
-  },
+export const roomFilters = [
+  { label: "All Rooms", value: "all" },
+  { label: "Emerald Tower", value: "Emerald Tower" },
+  { label: "Sapphire Tower", value: "Sapphire Tower" },
+  { label: "Ruby Tower", value: "Ruby Tower" },
+];
 
-  {
-    id: "ruby-05-focus",
-    tower: "Ruby Tower",
-    level: "Level 5",
-    name: "Focus Pod",
-    code: "RB-05-FP",
-    capacity: 2,
-    type: "focus",
-    status: "maintenance",
-    availability: "Unavailable temporarily",
-    amenities: [
-      "Quiet Zone",
-      "Charging Port",
-    ],
-  },
-
-  {
-    id: "emerald-08-board",
-    tower: "Emerald Tower",
-    level: "Level 8",
-    name: "Board Room",
-    code: "EM-08-BR",
-    capacity: 14,
-    type: "board",
-    status: "available",
-    availability: "Available all day",
-    amenities: [
-      "Dual Display",
-      "Conference Camera",
-      "Coffee Area",
-      "Video Conference",
-    ],
-  },
-
-  {
-    id: "sapphire-10-huddle",
-    tower: "Sapphire Tower",
-    level: "Level 10",
-    name: "Huddle Space",
-    code: "SP-10-HS",
-    capacity: 6,
-    type: "huddle",
-    status: "occupied",
-    availability: "Busy until 5:00 PM",
-    amenities: [
-      "TV",
-      "Whiteboard",
-      "Standing Desk",
-    ],
-  },
-] as const;
+export const levelFilters = [
+  { label: "All Levels", value: "all" },
+  { label: "Level 5", value: "Level 5" },
+  { label: "Level 8", value: "Level 8" },
+  { label: "Level 10", value: "Level 10" },
+  { label: "Level 12", value: "Level 12" },
+  { label: "Level 15", value: "Level 15" },
+];

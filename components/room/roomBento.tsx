@@ -5,14 +5,21 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
 import { useOverlay } from "../../contexts/overlayContext";
 import { DatePickerContent } from "../datePicker";
+import { useRoom } from "../../hooks/useRoom";
 
 export default function RoomBento() {
   const theme = useTheme();
   const { showModal, hideModal, toast } = useOverlay();
+  const { stats } = useRoom();
   const { spacing, radii } = design;
 
-  const [selectedDate, setSelectedDate] = useState("Mon, 18 May 2026");
-  const [dateValue, setDateValue] = useState(new Date(2026, 4, 18));
+  const [selectedDate, setSelectedDate] = useState(new Date().toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }));
+  const [dateValue, setDateValue] = useState(new Date());
 
   const handleDatePicker = () => {
     showModal({
@@ -70,7 +77,7 @@ export default function RoomBento() {
             </Text>
             
             <View style={{ marginTop: spacing.md }}>
-              <Text style={{ fontSize: 42, fontWeight: "900", color: "#FFF", lineHeight: 46 }}>
+              <Text style={{ fontSize: 38, fontWeight: "900", color: "#FFF", lineHeight: 42 }}>
                 {weekday} {dayMonth}
               </Text>
               <Text style={{ fontSize: 16, fontWeight: "600", color: "rgba(255,255,255,0.8)", marginTop: 2 }}>
@@ -114,7 +121,7 @@ export default function RoomBento() {
             <Text style={{ fontSize: 10, fontWeight: "800", color: "rgba(255,255,255,0.8)", letterSpacing: 0.5 }}>ACTIVE</Text>
             
             <View>
-              <Text style={{ fontSize: 32, fontWeight: "900", color: "#FFF" }}>2</Text>
+              <Text style={{ fontSize: 32, fontWeight: "900", color: "#FFF" }}>{stats.activeBookings}</Text>
               <Text style={{ fontSize: 11, fontWeight: "600", color: "rgba(255,255,255,0.7)", marginTop: 2 }}>Current Bookings</Text>
             </View>
           </View>
