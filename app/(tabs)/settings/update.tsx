@@ -1,43 +1,90 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { View, ScrollView, KeyboardAvoidingView, Platform } from "react-native";
-import { Button, Card, TextInput, useTheme } from "react-native-paper";
+import { Button, Card, TextInput, useTheme, ActivityIndicator } from "react-native-paper";
 import Header from "../../../components/header";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
+import { useStaff } from "../../../hooks/useStaff";
+import { useOverlay } from "../../../contexts/overlayContext";
 
 export default function Update() {
   const theme = useTheme();
   const tokens = useDesign();
   const { setHideTabBar } = useTabs();
+  const { staff, updateStaff, loading } = useStaff();
+  const { showLoader, hideLoader, toast } = useOverlay();
 
-  const INITIAL_VALUES = {
-    nickname: "Daiman",
-    email: "daiman@company.com",
-    contact: "+60123456789",
-    address1: "Jalan Bukit Bintang",
-    address2: "Residensi Premium",
-    address3: "Residensi Premium",
-  };
+  const [form, setForm] = useState({
+    nick_name: "",
+    email: "",
+    contact_no: "",
+    address1: "",
+    address2: "",
+    address3: "",
+  });
 
-  const [nickname, setNickname] = useState(INITIAL_VALUES.nickname);
-  const [email, setEmail] = useState(INITIAL_VALUES.email);
-  const [contact, setContact] = useState(INITIAL_VALUES.contact);
-  const [address1, setAddress1] = useState(INITIAL_VALUES.address1);
-  const [address2, setAddress2] = useState(INITIAL_VALUES.address2);
-  const [address3, setAddress3] = useState(INITIAL_VALUES.address3);
+  useEffect(() => {
+    if (staff) {
+      setForm({
+        nick_name: staff.nick_name || "",
+        email: staff.email || "",
+        contact_no: staff.contact_no || "",
+        address1: staff.address1 || "",
+        address2: staff.address2 || "",
+        address3: staff.address3 || "",
+      });
+    }
+  }, [staff]);
 
-  const hasChanges =
-    nickname !== INITIAL_VALUES.nickname ||
-    email !== INITIAL_VALUES.email ||
-    contact !== INITIAL_VALUES.contact ||
-    address1 !== INITIAL_VALUES.address1 ||
-    address2 !== INITIAL_VALUES.address2 ||
-    address3 !== INITIAL_VALUES.address3;
+  const hasChanges = useMemo(() => {
+    if (!staff) return false;
+    return (
+      form.nick_name !== (staff.nick_name || "") ||
+      form.email !== (staff.email || "") ||
+      form.contact_no !== (staff.contact_no || "") ||
+      form.address1 !== (staff.address1 || "") ||
+      form.address2 !== (staff.address2 || "") ||
+      form.address3 !== (staff.address3 || "")
+    );
+  }, [form, staff]);
 
   useEffect(() => {
     setHideTabBar(true);
     return () => setHideTabBar(false);
   }, []);
+
+  const handleSave = async () => {
+    showLoader("Updating profile...");
+    try {
+      const res = await updateStaff(form);
+      if (res.success) {
+        toast({
+          message: "Profile updated successfully!",
+          variant: "success",
+        });
+      } else {
+        toast({
+          message: res.error || "Failed to update profile.",
+          variant: "error",
+        });
+      }
+    } catch (e) {
+      toast({
+        message: "An unexpected error occurred.",
+        variant: "error",
+      });
+    } finally {
+      hideLoader();
+    }
+  };
+
+  if (loading && !staff) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View
@@ -82,8 +129,8 @@ export default function Update() {
                   <TextInput
                     mode="outlined"
                     label="Nickname"
-                    value={nickname}
-                    onChangeText={setNickname}
+                    value={form.nick_name}
+                    onChangeText={(val) => setForm({ ...form, nick_name: val })}
                     outlineStyle={{
                       borderRadius: tokens.radii.lg,
                     }}
@@ -92,8 +139,8 @@ export default function Update() {
                   <TextInput
                     mode="outlined"
                     label="Email Address"
-                    value={email}
-                    onChangeText={setEmail}
+                    value={form.email}
+                    onChangeText={(val) => setForm({ ...form, email: val })}
                     keyboardType="email-address"
                     autoCapitalize="none"
                     outlineStyle={{
@@ -104,8 +151,8 @@ export default function Update() {
                   <TextInput
                     mode="outlined"
                     label="Contact Number"
-                    value={contact}
-                    onChangeText={setContact}
+                    value={form.contact_no}
+                    onChangeText={(val) => setForm({ ...form, contact_no: val })}
                     keyboardType="phone-pad"
                     outlineStyle={{
                       borderRadius: tokens.radii.lg,
@@ -115,8 +162,8 @@ export default function Update() {
                     <TextInput
                       mode="outlined"
                       label="Address Line 1"
-                      value={address1}
-                      onChangeText={setAddress1}
+                      value={form.address1}
+                      onChangeText={(val) => setForm({ ...form, address1: val })}
                       outlineStyle={{
                         borderRadius: tokens.radii.lg,
                       }}
@@ -125,8 +172,8 @@ export default function Update() {
                     <TextInput
                       mode="outlined"
                       label="Address Line 2"
-                      value={address2}
-                      onChangeText={setAddress2}
+                      value={form.address2}
+                      onChangeText={(val) => setForm({ ...form, address2: val })}
                       outlineStyle={{
                         borderRadius: tokens.radii.lg,
                       }}
@@ -135,8 +182,8 @@ export default function Update() {
                     <TextInput
                       mode="outlined"
                       label="Address Line 3"
-                      value={address3}
-                      onChangeText={setAddress3}
+                      value={form.address3}
+                      onChangeText={(val) => setForm({ ...form, address3: val })}
                       outlineStyle={{
                         borderRadius: tokens.radii.lg,
                       }}
@@ -148,6 +195,7 @@ export default function Update() {
               <Button
                 mode="contained"
                 disabled={!hasChanges}
+                onPress={handleSave}
                 style={{
                   borderRadius: tokens.radii.full,
                 }}

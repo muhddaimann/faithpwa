@@ -19,6 +19,7 @@ import AttendanceCard from "../../../components/attendance/attendanceCard";
 import NewsflashCarousel from "../../../components/newsflash/newsflashCarousel";
 import RowTwo from "../../../components/rowtwo";
 import { useLeave } from "../../../hooks/useLeave";
+import { useRoom } from "../../../hooks/useRoom";
 
 export default function Home() {
   const theme = useTheme();
@@ -26,7 +27,8 @@ export default function Home() {
   const router = useRouter();
   const { user } = useAuth();
   const { staff, displayName, initials, welcomeMessage } = useStaff();
-  const { stats, loading: leaveLoading } = useLeave();
+  const { stats: leaveStats } = useLeave();
+  const { stats: roomStats, myBookings } = useRoom();
   const { toast } = useOverlay();
   const { onScroll } = useTabs();
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -95,13 +97,13 @@ export default function Home() {
           left={{
             icon: "clock-outline",
             label: "Pending Leave",
-            value: stats.pending.toString(),
+            value: leaveStats.pending.toString(),
             color: "#F59E0B",
           }}
           right={{
             icon: "briefcase-outline",
             label: "Annual Balance",
-            value: stats.annualBalance.toString(),
+            value: leaveStats.annualBalance.toString(),
             color: "#10B981",
           }}
         />
@@ -120,13 +122,13 @@ export default function Home() {
           left={{
             icon: "door-open",
             label: "Active Booking",
-            value: "0",
+            value: roomStats.activeBookings.toString(),
             color: "#3B82F6",
           }}
           right={{
             icon: "history",
             label: "Booking History",
-            value: "0",
+            value: myBookings.length.toString(),
             color: "#8B5CF6",
           }}
         />
