@@ -49,15 +49,15 @@ export function NavBar() {
               },
               {
                 id: "leave",
-                label: "Add Leave",
+                label: "Apply Leave",
                 route: "home/leave",
                 icon: "calendar-remove",
               },
               {
-                id: "performance",
-                label: "Performance Review",
-                route: "home/performance",
-                icon: "chart-line",
+                id: "update",
+                label: "Update Details",
+                route: "settings/update",
+                icon: "account-edit-outline",
               },
               {
                 id: "main",
@@ -68,7 +68,12 @@ export function NavBar() {
             ]}
             onSelect={(item) => {
               hideModal();
-              router.push(item.route as any);
+              if (item.id === "update") {
+                router.navigate("/settings");
+                router.push("/settings/update");
+              } else {
+                router.push(item.route as any);
+              }
             }}
             keyExtractor={(item) => item.id}
             labelExtractor={(item) => item.label}

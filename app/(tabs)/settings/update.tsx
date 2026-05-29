@@ -5,14 +5,12 @@ import Header from "../../../components/header";
 import { useDesign } from "../../../contexts/designContext";
 import { useTabs } from "../../../contexts/tabContext";
 import { useStaff } from "../../../hooks/useStaff";
-import { useOverlay } from "../../../contexts/overlayContext";
 
 export default function Update() {
   const theme = useTheme();
   const tokens = useDesign();
   const { setHideTabBar } = useTabs();
   const { staff, updateStaff, loading } = useStaff();
-  const { showLoader, hideLoader, toast } = useOverlay();
 
   const [form, setForm] = useState({
     nick_name: "",
@@ -31,7 +29,7 @@ export default function Update() {
         contact_no: staff.contact_no || "",
         address1: staff.address1 || "",
         address2: staff.address2 || "",
-        address3: staff.address3 || "",
+        address3: staff.address3 || ""
       });
     }
   }, [staff]);
@@ -53,29 +51,8 @@ export default function Update() {
     return () => setHideTabBar(false);
   }, []);
 
-  const handleSave = async () => {
-    showLoader("Updating profile...");
-    try {
-      const res = await updateStaff(form);
-      if (res.success) {
-        toast({
-          message: "Profile updated successfully!",
-          variant: "success",
-        });
-      } else {
-        toast({
-          message: res.error || "Failed to update profile.",
-          variant: "error",
-        });
-      }
-    } catch (e) {
-      toast({
-        message: "An unexpected error occurred.",
-        variant: "error",
-      });
-    } finally {
-      hideLoader();
-    }
+  const handleSave = () => {
+    updateStaff(form);
   };
 
   if (loading && !staff) {
