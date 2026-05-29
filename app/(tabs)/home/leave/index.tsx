@@ -22,12 +22,14 @@ import ScrollTop from "../../../../components/scrollTop";
 import RowTwo from "../../../../components/rowtwo";
 import LeaveList from "../../../../components/leave/leaveList";
 import { useLeave } from "../../../../hooks/useLeave";
+import { useRouter } from "expo-router";
 
 export default function Leave() {
   const theme = useTheme();
   const tokens = useDesign();
+  const router = useRouter();
   const { setHideTabBar } = useTabs();
-  const { toast, showSheet, hideModal } = useOverlay();
+  const { alert } = useOverlay();
   const { stats } = useLeave();
 
   const scrollViewRef = useRef<ScrollView | null>(null);
@@ -47,60 +49,11 @@ export default function Leave() {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  const handleApplyLeave = () => {
-    showSheet({
-      title: "Apply for Leave",
-      content: (
-        <View style={{ gap: tokens.spacing.lg }}>
-          <Text variant="bodyMedium">
-            Fill in the details below to submit your leave request. This will be
-            sent to your supervisor for approval.
-          </Text>
-
-          <Divider />
-
-          <View style={{ gap: tokens.spacing.md }}>
-            <Text variant="titleSmall">Select Leave Type</Text>
-            {[
-              "Annual Leave",
-              "Medical Leave",
-              "Unpaid Leave",
-              "Emergency Leave",
-            ].map((type) => (
-              <TouchableOpacity
-                key={type}
-                style={{
-                  padding: tokens.spacing.md,
-                  backgroundColor: theme.colors.surfaceVariant,
-                  borderRadius: tokens.radii.md,
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                }}
-                onPress={() => {
-                  toast(`Selected ${type}`);
-                }}
-              >
-                <Text>{type}</Text>
-                <Icon source="chevron-right" size={20} />
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Button
-            mode="contained"
-            onPress={() => {
-              toast({
-                message: "Leave request submitted!",
-                variant: "success",
-              });
-              // In a real app, you'd close the sheet here
-            }}
-            style={{ marginTop: tokens.spacing.md }}
-          >
-            Submit Request
-          </Button>
-        </View>
-      ),
+  const handleAboutLeave = () => {
+    alert({
+      title: "Leave Policy",
+      message: "• Please ensure you have discussed and obtained verbal approval from your manager before submitting.\n\n• Applications close to the payday cycle (after 20th) may only be reflected in the following month's payslip.\n\n• Emergency leaves must be supported by valid documentation upon return.",
+      buttonText: "Got it"
     });
   };
 
@@ -139,16 +92,33 @@ export default function Leave() {
           }}
         />
 
-        <Button
-          mode="outlined"
-          onPress={handleApplyLeave}
-          style={{
-            borderRadius: tokens.radii.pill,
-          }}
-          icon="plus"
-        >
-          Apply for Leave
-        </Button>
+        <View style={{ flexDirection: "row", gap: tokens.spacing.sm }}>
+          <Button
+            mode="outlined"
+            onPress={handleAboutLeave}
+            style={{
+              flex: 1,
+              borderRadius: tokens.radii.pill,
+              borderColor: theme.colors.outline,
+            }}
+            icon="information-outline"
+          >
+            About
+          </Button>
+          
+          <Button
+            mode="contained"
+            onPress={() => router.push("home/leave/apply")}
+            style={{
+              flex: 1.5,
+              borderRadius: tokens.radii.pill,
+            }}
+            icon="plus"
+          >
+            Apply Leave
+          </Button>
+        </View>
+
         <LeaveList />
       </ScrollView>
 
