@@ -21,21 +21,9 @@ import { useLeave } from "../../../../hooks/useLeave";
 import { useRouter } from "expo-router";
 import PickerModal from "../../../../components/pickerModal";
 import DocumentModal from "../../../../components/documentModal";
+import DatePicker from "../../../../components/datePicker";
 import { useUpload } from "../../../../hooks/useUpload";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-
-const LEAVE_TYPES = [
-  { id: "AL", label: "Annual Leave", icon: "calendar-star" },
-  { id: "MC", label: "Medical Leave", icon: "medical-bag" },
-  { id: "UL", label: "Unpaid Leave", icon: "cash-remove" },
-  { id: "EL", label: "Emergency Leave", icon: "alert-octagon" },
-];
-
-const LEAVE_PERIODS = [
-  { id: "full", label: "Full Day", icon: "clock-outline" },
-  { id: "morning", label: "First Half", icon: "weather-sunny" },
-  { id: "afternoon", label: "Second Half", icon: "weather-night" },
-];
 
 export default function ApplyLeave() {
   const theme = useTheme();
@@ -43,7 +31,16 @@ export default function ApplyLeave() {
   const router = useRouter();
   const { setHideTabBar } = useTabs();
   const { toast, showLoader, hideLoader, showModal, hideModal, modalVisible } = useOverlay();
-  const { apply } = useLeave();
+  const { 
+    apply,
+    leaveType,
+    selectLeaveType,
+    leavePeriod,
+    selectLeavePeriod,
+    selectedReason,
+    selectReason
+  } = useLeave();
+  
   const { 
     attachedDocument, 
     setAttachedDocument, 
@@ -54,9 +51,13 @@ export default function ApplyLeave() {
     setError
   } = useUpload();
 
-  const [reason, setReason] = useState("");
-  const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
-  const [leavePeriod, setLeavePeriod] = useState(LEAVE_PERIODS[0]);
+  const [remarks, setRemarks] = useState("");
+  
+  const [dateRange, setDateRange] = useState<{ start: Date | null; end: Date | null }>({
+    start: null,
+    end: null,
+  });
+  const [isDatePickerVisible, setIsDatePickerVisible] = useState(false);
 
   useEffect(() => {
     setHideTabBar(true);
@@ -69,44 +70,6 @@ export default function ApplyLeave() {
       setError(null);
     }
   }, [error]);
-
-  const handleSelectLeaveType = () => {
-    showModal({
-      content: (
-        <PickerModal
-          title="Select Leave Type"
-          data={LEAVE_TYPES}
-          selected={leaveType}
-          onSelect={(item) => {
-            setLeaveType(item);
-            hideModal();
-          }}
-          keyExtractor={(item) => item.id}
-          labelExtractor={(item) => item.label}
-          iconExtractor={(item) => item.icon as any}
-        />
-      ),
-    });
-  };
-
-  const handleSelectLeavePeriod = () => {
-    showModal({
-      content: (
-        <PickerModal
-          title="Select Period"
-          data={LEAVE_PERIODS}
-          selected={leavePeriod}
-          onSelect={(item) => {
-            setLeavePeriod(item);
-            hideModal();
-          }}
-          keyExtractor={(item) => item.id}
-          labelExtractor={(item) => item.label}
-          iconExtractor={(item) => item.icon as any}
-        />
-      ),
-    });
-  };
 
   const handleAttachDocument = async () => {
     const doc = await pick();
@@ -144,8 +107,13 @@ export default function ApplyLeave() {
   }, [documentRefNo]);
 
   const handleSubmit = async () => {
-    if (!reason.trim()) {
-      toast("Please provide a reason for your leave.");
+    if (!dateRange.start || !dateRange.end) {
+      toast("Please select a date range.");
+      return;
+    }
+
+    if (!selectedReason) {
+      toast("Please select a reason for your leave.");
       return;
     }
 
@@ -155,9 +123,17 @@ export default function ApplyLeave() {
       const formData = new FormData();
       formData.append('leave_type', leaveType.id);
       formData.append('leave_period', leavePeriod.id);
-      formData.append('reason', reason);
+      formData.append('reason', selectedReason.label);
+      formData.append('remarks', remarks);
       formData.append('document_ref_no', documentRefNo);
       
+      if (dateRange.start) {
+        formData.append('start_date', dateRange.start.toISOString().split('T')[0]);
+      }
+      if (dateRange.end) {
+        formData.append('end_date', dateRange.end.toISOString().split('T')[0]);
+      }
+
       if (attachedDocument) {
         // @ts-ignore
         formData.append('document', {
@@ -214,27 +190,54 @@ export default function ApplyLeave() {
             <View style={{ gap: tokens.spacing.md }}>
               <Text variant="titleMedium" style={{ fontWeight: "700" }}>Leave Details</Text>
               
-              <Pressable onPress={handleSelectLeaveType}>
+              <Pressable onPress={() => setIsDatePickerVisible(true)}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Leave Dates"
+                    value={
+                      dateRange.start && dateRange.end
+                        ? `${dateRange.start.toLocaleDateString()} - ${dateRange.end.toLocaleDateString()}`
+                        : "Select dates"
+                    }
+                    editable={false}
+                    left={<TextInput.Icon icon="calendar" />}
+                    outlineStyle={{ borderRadius: tokens.radii.lg }}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={selectLeaveType}>
                 <View pointerEvents="none">
                   <TextInput
                     mode="outlined"
                     label="Leave Type"
                     value={leaveType.label}
                     editable={false}
-                    right={<TextInput.Icon icon="chevron-down" />}
                     outlineStyle={{ borderRadius: tokens.radii.lg }}
                   />
                 </View>
               </Pressable>
 
-              <Pressable onPress={handleSelectLeavePeriod}>
+              <Pressable onPress={selectLeavePeriod}>
                 <View pointerEvents="none">
                   <TextInput
                     mode="outlined"
                     label="Leave Period"
                     value={leavePeriod.label}
                     editable={false}
-                    right={<TextInput.Icon icon="chevron-down" />}
+                    outlineStyle={{ borderRadius: tokens.radii.lg }}
+                  />
+                </View>
+              </Pressable>
+
+              <Pressable onPress={selectReason}>
+                <View pointerEvents="none">
+                  <TextInput
+                    mode="outlined"
+                    label="Reason"
+                    value={selectedReason.label}
+                    editable={false}
                     outlineStyle={{ borderRadius: tokens.radii.lg }}
                   />
                 </View>
@@ -242,12 +245,12 @@ export default function ApplyLeave() {
 
               <TextInput
                 mode="outlined"
-                label="Reason"
-                placeholder="e.g. Family matters"
-                value={reason}
-                onChangeText={setReason}
+                label="Remarks (Optional)"
+                placeholder="Any additional notes..."
+                value={remarks}
+                onChangeText={setRemarks}
                 multiline
-                numberOfLines={4}
+                numberOfLines={3}
                 outlineStyle={{ borderRadius: tokens.radii.lg }}
               />
             </View>
@@ -346,6 +349,15 @@ export default function ApplyLeave() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <DatePicker
+        visible={isDatePickerVisible}
+        onDismiss={() => setIsDatePickerVisible(false)}
+        variant="range"
+        title="Select Leave Dates"
+        rangeValue={dateRange}
+        onRangeChange={(range) => setDateRange(range)}
+      />
     </View>
   );
 }
