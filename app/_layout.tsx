@@ -14,7 +14,7 @@ import {
   SourceSansPro_700Bold,
 } from "@expo-google-fonts/source-sans-pro";
 import { useEffect } from "react";
-import { View, Platform, useWindowDimensions, ActivityIndicator } from "react-native";
+import { View, Platform, useWindowDimensions } from "react-native";
 import { useTheme } from "react-native-paper";
 import {
   SafeAreaProvider,

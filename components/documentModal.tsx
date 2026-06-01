@@ -1,9 +1,8 @@
-import React, { useState } from "react";
-import { View, Pressable } from "react-native";
-import { Text, useTheme, TextInput, Button, IconButton } from "react-native-paper";
+import React from "react";
+import { View } from "react-native";
+import { Text, useTheme, TextInput, Button } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../contexts/designContext";
-import { useUpload } from "../hooks/useUpload";
 
 type DocumentModalProps = {
   title?: string;

@@ -19,7 +19,6 @@ import { useOverlay } from "../../../../contexts/overlayContext";
 import Header from "../../../../components/header";
 import { useLeave } from "../../../../hooks/useLeave";
 import { useRouter } from "expo-router";
-import PickerModal from "../../../../components/pickerModal";
 import DocumentModal from "../../../../components/documentModal";
 import DatePicker from "../../../../components/datePicker";
 import { useUpload } from "../../../../hooks/useUpload";
@@ -99,7 +98,6 @@ export default function ApplyLeave() {
     });
   };
 
-  // Re-render modal content when document state or refNo changes to keep UI synced
   useEffect(() => {
     if (modalVisible && attachedDocument) {
       showRefModal(attachedDocument);

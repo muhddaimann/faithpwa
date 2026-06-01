@@ -22,8 +22,6 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
     withdraw, 
     clear 
   } = useLeaveStore();
-
-  // Selection states for application form
   const [leaveType, setLeaveType] = useState(LEAVE_TYPES[0]);
   const [leavePeriod, setLeavePeriod] = useState(LEAVE_PERIODS[0]);
   const [selectedReason, setSelectedReason] = useState(LEAVE_REASONS[0]);
@@ -85,7 +83,6 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
     });
   };
 
-  // Fetch data on mount if list is empty
   useEffect(() => {
     if (leaves.length === 0 && !loading && !error) {
       fetchLeaves();
@@ -181,22 +178,19 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
     });
   };
 
-  // Handle filtering
   const filteredLeaves = useMemo(() => {
     if (statusFilter === 'All') return leaves;
     return leaves.filter((l) => l.manager_status === statusFilter);
   }, [leaves, statusFilter]);
 
-  // Statistics helpers
   const stats = useMemo(() => {
     return {
       pending: leaves.filter(l => l.manager_status === 'Pending').length,
       approved: leaves.filter(l => l.manager_status === 'Approved').length,
       rejected: leaves.filter(l => l.manager_status === 'Rejected').length,
       total: leaves.length,
-      // Mapping the flat 'balance' field from the server
       annualBalance: balances?.balance || 0,
-      medicalBalance: 0, // Profile doesn't return SL yet
+      medicalBalance: 0,
     };
   }, [leaves, balances]);
 
@@ -214,7 +208,6 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
     clearLeaves: clear,
     showDetails,
     hasLeaves: leaves.length > 0,
-    // Form handlers
     leaveType,
     setLeaveType,
     selectLeaveType,
