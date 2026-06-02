@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   View,
   ScrollView,
@@ -14,9 +14,11 @@ import Header from "../../../../components/header";
 import { useLeave } from "../../../../hooks/useLeave";
 import { useRouter } from "expo-router";
 import DocumentModal from "../../../../components/documentModal";
+import ClinicModal from "../../../../components/clinicModal";
 import DatePicker from "../../../../components/datePicker";
 import { useUpload } from "../../../../hooks/useUpload";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Clinic } from "../../../../contexts/api/clinic";
 
 export default function ApplyLeave() {
   const theme = useTheme();
@@ -46,6 +48,7 @@ export default function ApplyLeave() {
   } = useUpload();
 
   const [remarks, setRemarks] = useState("");
+  const [selectedClinic, setSelectedClinic] = useState<Clinic | null>(null);
 
   const [dateRange, setDateRange] = useState<{
     start: Date | null;
@@ -67,6 +70,33 @@ export default function ApplyLeave() {
       setError(null);
     }
   }, [error]);
+
+  useEffect(() => {
+    if (leaveType?.id !== 'MC') {
+      setSelectedClinic(null);
+    }
+  }, [leaveType]);
+
+  const isFormValid = useMemo(() => {
+    if (!leaveType || !leavePeriod || !selectedReason || !dateRange.start) return false;
+    if (leavePeriod.id === "full" && !dateRange.end) return false;
+    if (leaveType.id === "MC" && !selectedClinic) return false;
+    return true;
+  }, [leaveType, leavePeriod, selectedReason, dateRange, selectedClinic]);
+
+  const selectClinic = () => {
+    showModal({
+      content: (
+        <ClinicModal
+          selected={selectedClinic}
+          onSelect={(item) => {
+            setSelectedClinic(item);
+            hideModal();
+          }}
+        />
+      ),
+    });
+  };
 
   const handleAttachDocument = async () => {
     const doc = await pick();
@@ -118,6 +148,11 @@ export default function ApplyLeave() {
       return;
     }
 
+    if (leaveType.id === "MC" && !selectedClinic) {
+      toast("Please select a clinic.");
+      return;
+    }
+
     if (!selectedReason) {
       toast("Please select a reason for your leave.");
       return;
@@ -132,6 +167,10 @@ export default function ApplyLeave() {
       formData.append("reason", selectedReason.label);
       formData.append("remarks", remarks);
       formData.append("document_ref_no", documentRefNo);
+
+      if (selectedClinic && leaveType.id === 'MC') {
+        formData.append("clinic_id", selectedClinic.clinic_id.toString());
+      }
 
       if (dateRange.start) {
         formData.append(
@@ -265,6 +304,22 @@ export default function ApplyLeave() {
                   />
                 </View>
               </Pressable>
+
+              {leaveType?.id === 'MC' && (
+                <Pressable onPress={selectClinic}>
+                  <View pointerEvents="none">
+                    <TextInput
+                      mode="outlined"
+                      label="Clinic"
+                      value={selectedClinic?.clinic_name || ""}
+                      placeholder="Search and select clinic"
+                      editable={false}
+                      left={<TextInput.Icon icon="hospital-building" />}
+                      outlineStyle={{ borderRadius: tokens.radii.lg }}
+                    />
+                  </View>
+                </Pressable>
+              )}
 
               <TextInput
                 mode="outlined"
@@ -403,7 +458,9 @@ export default function ApplyLeave() {
               style={{
                 borderRadius: tokens.radii.pill,
                 paddingVertical: 6,
+                backgroundColor: isFormValid ? theme.colors.primary : theme.colors.surfaceVariant,
               }}
+              textColor={isFormValid ? theme.colors.onPrimary : theme.colors.onSurfaceVariant}
               contentStyle={{ height: 48 }}
             >
               Submit Application
