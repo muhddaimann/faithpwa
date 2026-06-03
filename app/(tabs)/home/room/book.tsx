@@ -11,29 +11,68 @@ import Header from "../../../../components/header";
 import { useRoom } from "../../../../hooks/useRoom";
 import { useStaff } from "../../../../hooks/useStaff";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useOverlay } from "../../../../contexts/overlayContext";
+import { useRouter } from "expo-router";
 
 export default function BookRoom() {
   const theme = useTheme();
   const tokens = useDesign();
   const { staff } = useStaff();
+  const { toast, showLoader, hideLoader } = useOverlay();
+  const router = useRouter();
   
   const {
     selectedRoom,
-    selectedSlot,
+    selectedSlots,
     selectedDate,
     purpose,
     setPurpose,
-    handleConfirmBooking,
+    book,
     isBookingValid,
   } = useRoom();
 
-  // Use local constants for narrowing and to prevent TS errors
   const room = selectedRoom;
-  const slot = selectedSlot;
+  const slot = selectedSlots.length > 0 
+    ? `${selectedSlots[0].split(' - ')[0]} - ${selectedSlots[selectedSlots.length - 1].split(' - ')[1]}`
+    : "";
 
   if (!room || !slot) {
     return null;
   }
+
+  const handleConfirm = async () => {
+    if (!room || selectedSlots.length === 0) return;
+    
+    showLoader("Securing your room...");
+    
+    const startTime = selectedSlots[0].split(' - ')[0];
+    const endTime = selectedSlots[selectedSlots.length - 1].split(' - ')[1];
+
+    try {
+      const res = await book(
+        selectedDate,
+        startTime,
+        endTime,
+        room.Room_Name,
+        room.Tower,
+        room.Level,
+        purpose,
+        staff?.first_name || "Staff",
+        staff?.email || ""
+      );
+
+      if ('error' in res) {
+        toast({ message: res.error, variant: 'error' });
+      } else {
+        toast({ message: "Room booked successfully!", variant: 'success' });
+        router.back();
+      }
+    } catch (err: any) {
+      toast({ message: err.message || "Failed to book room", variant: 'error' });
+    } finally {
+      hideLoader();
+    }
+  };
 
   const getRoomIcon = (name: string) => {
     const n = name.toLowerCase();
@@ -148,7 +187,7 @@ export default function BookRoom() {
             <Button
               mode="contained"
               disabled={!isBookingValid}
-              onPress={() => handleConfirmBooking(staff?.first_name || "Staff", staff?.email || "")}
+              onPress={handleConfirm}
               style={{
                 borderRadius: tokens.radii.pill,
                 marginTop: tokens.spacing.lg,
