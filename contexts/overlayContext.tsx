@@ -274,7 +274,24 @@ export function OverlayProvider({ children }: { children: React.ReactNode }) {
 export const useOverlay = () => {
   const context = useContext(OverlayContext);
   if (!context) {
-    throw new Error("useOverlay must be used within an OverlayProvider");
+    // Return a dummy object to prevent crashes if used outside provider
+    return {
+      alert: () => {},
+      confirm: () => {},
+      toast: () => {},
+      showModal: () => {},
+      hideModal: () => {},
+      modalVisible: false,
+      showSheet: () => {},
+      hideSheet: () => {},
+      sheetVisible: false,
+      showLoader: () => {},
+      hideLoader: () => {},
+      isLoading: false,
+      isRefreshing: false,
+      isOverlayActive: false,
+      performRefresh: async (task: () => Promise<void>) => { await task(); },
+    } as OverlayContextType;
   }
   return context;
 };

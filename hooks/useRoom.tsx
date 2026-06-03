@@ -12,6 +12,15 @@ export const useRoom = () => {
     fetchRooms,
     fetchBookings,
     setSelectedDate,
+    
+    selectedRoom,
+    setSelectedRoom,
+    selectedSlots,
+    setSelectedSlots,
+    toggleSlot,
+    purpose,
+    setPurpose,
+    
     createBooking,
     cancelBooking,
     clear,
@@ -33,9 +42,34 @@ export const useRoom = () => {
     return {
       activeBookings: upcoming.length,
       totalRooms: rooms.length,
-      upcomingBooking: upcoming[0] || null, // For quick access to the next one
+      upcomingBooking: upcoming[0] || null,
     };
   }, [myBookings, rooms]);
+
+  const isBookingValid = useMemo(() => {
+    return selectedRoom !== null && selectedSlots.length > 0 && purpose.trim().length >= 3;
+  }, [selectedRoom, selectedSlots, purpose]);
+
+  // Return a prepared booking payload and calculation
+  const getBookingPayload = () => {
+    if (!selectedRoom || selectedSlots.length === 0) return null;
+
+    const firstRange = selectedSlots[0];
+    const lastRange = selectedSlots[selectedSlots.length - 1];
+
+    const startTime = firstRange.split(' - ')[0];
+    const endTime = lastRange.split(' - ')[1];
+
+    return {
+      bookDate: selectedDate,
+      startTime,
+      endTime,
+      room: selectedRoom.Room_Name,
+      tower: selectedRoom.Tower,
+      level: selectedRoom.Level,
+      purpose,
+    };
+  };
 
   return {
     rooms,
@@ -51,5 +85,16 @@ export const useRoom = () => {
     cancel: cancelBooking,
     getAvailability: getRoomAvailabilityByDay,
     clearRoomData: clear,
+
+    // Booking Flow State
+    selectedRoom,
+    setSelectedRoom,
+    selectedSlots,
+    setSelectedSlots,
+    toggleSlot,
+    purpose,
+    setPurpose,
+    isBookingValid,
+    getBookingPayload,
   };
 };

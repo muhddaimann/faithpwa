@@ -28,8 +28,10 @@ export function NavBar() {
   const isAttendance = pathname.includes("/home/attendance");
   const isUpdate = pathname.includes("/settings/update");
   const isNewsflash = pathname.includes("/home/newsflash");
-  
-  const forceHide = isLeave || isAttendance || isUpdate || isNewsflash;
+  const isRoom = pathname.includes("/home/room");
+
+  const forceHide =
+    isLeave || isAttendance || isUpdate || isNewsflash || isRoom;
   const effectivelyHidden = hideTabBar || forceHide;
 
   const translateY = useRef(new Animated.Value(0)).current;
@@ -63,16 +65,16 @@ export function NavBar() {
                 icon: "calendar-remove",
               },
               {
+                id: "room",
+                label: "Check Room Availability",
+                route: "home/room",
+                icon: "door-sliding",
+              },
+              {
                 id: "update",
                 label: "Update Details",
                 route: "settings/update",
                 icon: "account-edit-outline",
-              },
-              {
-                id: "main",
-                label: "Demo Component",
-                route: "home/main",
-                icon: "flask",
               },
             ]}
             onSelect={(item) => {

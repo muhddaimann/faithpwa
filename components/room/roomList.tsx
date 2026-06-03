@@ -1,16 +1,17 @@
 import React, { useMemo, useState } from "react";
 import { View, TouchableOpacity, ScrollView } from "react-native";
-import { Card, Text, Chip, Button, Avatar, useTheme, Divider } from "react-native-paper";
+import { Card, Text, Chip, Button, Avatar, useTheme } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 import { useRoom } from "../../hooks/useRoom";
 import { useOverlay } from "../../contexts/overlayContext";
 import { Room } from "../../contexts/api/room";
+import RoomTimeSheet from "./roomTimeSheet";
 
 export default function RoomList() {
   const theme = useTheme();
   const tokens = useDesign();
   const { showSheet, toast, showLoader, hideLoader } = useOverlay();
-  const { rooms, loading, refreshRooms, getAvailability, selectedDate } = useRoom();
+  const { rooms, getAvailability, selectedDate, setSelectedRoom, setSelectedSlots, setPurpose } = useRoom();
 
   const [selectedTower, setSelectedTower] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -49,106 +50,66 @@ export default function RoomList() {
   const handleBooking = async (room: Room) => {
     showLoader(`Checking availability for ${room.Room_Name}...`);
     
-    const res = await getAvailability(room.room_id, selectedDate);
-    hideLoader();
+    try {
+      const res = await getAvailability(room.room_id, selectedDate);
+      hideLoader();
 
-    if ('error' in res) {
-      toast(res.error);
-      return;
-    }
+      if ('error' in res) {
+        toast(res.error);
+        return;
+      }
 
-    const now = new Date();
-    const today = now.toISOString().split('T')[0];
-    const isToday = selectedDate === today;
+      // Reset flow state
+      setSelectedRoom(room);
+      setSelectedSlots([]);
+      setPurpose("");
 
-    const timeSlots = Object.entries(res.availability)
-      .map(([time, data]) => {
-        let isPast = false;
-        
-        if (isToday) {
-          // Parse time string like "09:00 AM" or "09:00"
-          const [timePart, ampm] = time.split(' ');
-          let [hours, minutes] = timePart.split(':').map(Number);
-          
-          if (ampm === 'PM' && hours < 12) hours += 12;
-          if (ampm === 'AM' && hours === 12) hours = 0;
-          
-          const slotTime = new Date();
-          slotTime.setHours(hours, minutes, 0, 0);
-          
-          if (now >= slotTime) {
-            isPast = true;
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const isToday = selectedDate === today;
+
+      const timeSlots = Object.entries(res.availability)
+        .map(([timeRange, data]) => {
+          let isPast = false;
+          const startTimeStr = timeRange.split(' - ')[0];
+
+          if (isToday && startTimeStr) {
+            const [timePart, ampm] = startTimeStr.split(' ');
+            let [hours, minutes] = timePart.split(':').map(Number);
+            
+            if (ampm === 'PM' && hours < 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+            
+            const slotTime = new Date();
+            slotTime.setHours(hours, minutes, 0, 0);
+            
+            if (now >= slotTime) {
+              isPast = true;
+            }
           }
-        }
 
-        return {
-          label: time,
-          isAvailable: data.status === 'Available',
-          pic: data.PIC,
-          eventName: data.event_name,
-          isPast
-        };
-      })
-      .filter(slot => !slot.isPast);
+          return {
+            label: timeRange,
+            isAvailable: data.status === 'Available',
+            pic: data.PIC,
+            eventName: data.event_name,
+            isPast
+          };
+        })
+        .filter(slot => !slot.isPast);
 
-    if (timeSlots.length === 0) {
-      toast("No more available slots for today.");
-      return;
+      if (timeSlots.length === 0) {
+        toast("No more available slots for today.");
+        return;
+      }
+
+      showSheet({
+        content: <RoomTimeSheet room={room} timeSlots={timeSlots} />,
+      });
+    } catch (error) {
+      hideLoader();
+      toast("Failed to fetch availability. Please try again.");
     }
-
-    showSheet({
-      content: (
-        <View style={{ gap: tokens.spacing.lg }}>
-          <View style={{ gap: 2 }}>
-            <Text variant="titleMedium" style={{ fontWeight: "700" }}>{room.Room_Name}</Text>
-            <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant }}>
-              {room.Tower} • {room.Level}
-            </Text>
-          </View>
-
-          <Divider />
-
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.sm }}>
-            {timeSlots.map((slot, index) => (
-              <TouchableOpacity
-                key={index}
-                disabled={!slot.isAvailable}
-                onPress={() => {
-                  toast(`Slot ${slot.label} selected for ${room.Room_Name}`);
-                }}
-                style={{
-                  width: "31%",
-                  paddingVertical: tokens.spacing.md,
-                  borderRadius: tokens.radii.lg,
-                  alignItems: "center",
-                  justifyContent: "center",
-                  backgroundColor: slot.isAvailable 
-                    ? theme.colors.surfaceVariant + "60" 
-                    : theme.colors.surfaceVariant + "20",
-                  borderWidth: 1,
-                  borderColor: slot.isAvailable 
-                    ? theme.colors.outline + "30" 
-                    : "transparent",
-                  opacity: slot.isAvailable ? 1 : 0.4
-                }}
-              >
-                <Text style={{ 
-                  fontSize: 11, 
-                  fontWeight: "700",
-                  color: slot.isAvailable ? theme.colors.onSurface : theme.colors.onSurfaceVariant
-                }}>
-                  {slot.label}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <Text variant="bodySmall" style={{ opacity: 0.6, fontStyle: "italic", textAlign: "center" }}>
-            * Greyed out slots are already booked
-          </Text>
-        </View>
-      ),
-    });
   };
 
   const getRoomIcon = (name: string) => {
@@ -322,7 +283,7 @@ export default function RoomList() {
                       marginTop: tokens.spacing.xs,
                     }}
                   >
-                    Book Now
+                    Check Availability
                   </Button>
                 </View>
               </Card>

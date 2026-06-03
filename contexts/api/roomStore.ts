@@ -18,9 +18,21 @@ interface RoomState {
   loading: boolean;
   error: string | null;
 
+  // Booking Flow State
+  selectedRoom: Room | null;
+  selectedSlots: string[];
+  purpose: string;
+
   fetchRooms: () => Promise<void>;
   fetchBookings: () => Promise<void>;
   setSelectedDate: (date: string) => void;
+  
+  // State Setters
+  setSelectedRoom: (room: Room | null) => void;
+  setSelectedSlots: (slots: string[]) => void;
+  setPurpose: (purpose: string) => void;
+  toggleSlot: (slot: string) => void;
+
   createBooking: (
     bookDate: string,
     startTime: string,
@@ -44,6 +56,10 @@ export const useRoomStore = create<RoomState>((set, get) => ({
   loading: false,
   error: null,
 
+  selectedRoom: null,
+  selectedSlots: [],
+  purpose: "",
+
   fetchRooms: async () => {
     set({ loading: true, error: null });
     const res = await getAllRoomsApi();
@@ -66,6 +82,31 @@ export const useRoomStore = create<RoomState>((set, get) => ({
 
   setSelectedDate: (date: string) => set({ selectedDate: date }),
 
+  setSelectedRoom: (room) => set({ selectedRoom: room }),
+  setSelectedSlots: (slots) => set({ selectedSlots: slots }),
+  setPurpose: (purpose) => set({ purpose }),
+  
+  toggleSlot: (slot) => {
+    const { selectedSlots } = get();
+    if (selectedSlots.includes(slot)) {
+      set({ selectedSlots: selectedSlots.filter(s => s !== slot) });
+    } else {
+      const newSlots = [...selectedSlots, slot].sort((a, b) => {
+        const timeToMinutes = (t: string) => {
+          // Extract start time part from range "09:00 AM - 09:30 AM"
+          const startPart = t.split(' - ')[0] || t;
+          const [time, ampm] = startPart.split(' ');
+          let [h, m] = time.split(':').map(Number);
+          if (ampm === 'PM' && h < 12) h += 12;
+          if (ampm === 'AM' && h === 12) h = 0;
+          return h * 60 + m;
+        };
+        return timeToMinutes(a) - timeToMinutes(b);
+      });
+      set({ selectedSlots: newSlots });
+    }
+  },
+
   createBooking: async (bookDate, startTime, endTime, room, tower, level, purpose, PIC, email) => {
     set({ loading: true, error: null });
     const res = await bookRoomApi(
@@ -82,7 +123,7 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     if ('error' in res) {
       set({ error: res.error, loading: false });
     } else {
-      set({ error: null });
+      set({ error: null, selectedSlots: [], purpose: "", selectedRoom: null });
       await get().fetchBookings();
     }
     set({ loading: false });
@@ -102,5 +143,5 @@ export const useRoomStore = create<RoomState>((set, get) => ({
     return res;
   },
 
-  clear: () => set({ rooms: [], myBookings: [], loading: false, error: null }),
+  clear: () => set({ rooms: [], myBookings: [], loading: false, error: null, selectedSlots: [], purpose: "", selectedRoom: null }),
 }));
