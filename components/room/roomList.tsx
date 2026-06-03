@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { View, TouchableOpacity, ScrollView } from "react-native";
-import { Card, Text, Chip, Button, Avatar, useTheme } from "react-native-paper";
+import { View, TouchableOpacity, ScrollView, Image, ImageBackground } from "react-native";
+import { Card, Text, Chip, Button, useTheme } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../contexts/designContext";
 import { useRoom } from "../../hooks/useRoom";
 import { useOverlay } from "../../contexts/overlayContext";
@@ -112,16 +113,6 @@ export default function RoomList() {
     }
   };
 
-  const getRoomIcon = (name: string) => {
-    const n = name.toLowerCase();
-    if (n.includes("board")) return "briefcase";
-    if (n.includes("training")) return "presentation";
-    if (n.includes("focus") || n.includes("mother")) return "head-cog";
-    if (n.includes("discussion") || n.includes("conference")) return "account-group";
-    if (n.includes("huddle")) return "google-circles-communities";
-    return "door";
-  };
-
   const renderFilterRow = (
     data: string[],
     selected: string,
@@ -188,106 +179,95 @@ export default function RoomList() {
           renderFilterRow(levels, selectedLevel, setSelectedLevel)}
       </View>
 
-      <View style={{ gap: tokens.spacing.md }}>
+      <View style={{ gap: tokens.spacing.xl }}>
         {filteredRooms.map((room) => {
-          const statusColor = theme.colors.primary;
+          const imageUrl = `https://endpoint.daythree.ai/faithMobile/room/${room.room_id}.jpeg`;
 
           return (
-            <TouchableOpacity key={room.room_id} activeOpacity={0.9}>
-              <Card
-                mode="contained"
-                style={{
-                  borderRadius: tokens.radii.xl,
-                  backgroundColor: theme.colors.surface,
-                }}
+            <Card
+              key={room.room_id}
+              mode="contained"
+              style={{
+                borderRadius: tokens.radii["2xl"],
+                backgroundColor: theme.colors.surface,
+                overflow: "hidden",
+                borderWidth: 1,
+                borderColor: theme.colors.outlineVariant,
+              }}
+            >
+              <ImageBackground
+                source={{ uri: imageUrl }}
+                style={{ height: 200, justifyContent: 'flex-end' }}
               >
-                <View
-                  style={{
-                    padding: tokens.spacing.lg,
-                    gap: tokens.spacing.md,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "flex-start",
-                      justifyContent: "space-between",
-                      gap: tokens.spacing.md,
-                    }}
-                  >
-                    <View
-                      style={{
-                        flexDirection: "row",
-                        gap: tokens.spacing.md,
-                        flex: 1,
-                      }}
+                <View style={{
+                    padding: tokens.spacing.md,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    backgroundColor: 'rgba(0,0,0,0.3)',
+                }}>
+                    <Chip 
+                        compact 
+                        style={{ backgroundColor: theme.colors.primary }}
+                        textStyle={{ color: theme.colors.onPrimary, fontWeight: '800', fontSize: 10 }}
                     >
-                      <Avatar.Icon
-                        size={54}
-                        icon={getRoomIcon(room.Room_Name)}
-                        style={{
-                          backgroundColor: `${statusColor}16`,
-                        }}
-                        color={statusColor}
-                      />
-
-                      <View style={{ flex: 1, gap: 2 }}>
-                        <Text
-                          variant="titleMedium"
-                          style={{
-                            fontWeight: "700",
-                          }}
-                        >
-                          {room.Room_Name}
-                        </Text>
-
-                        <Text
-                          variant="bodyMedium"
-                          style={{
-                            color: theme.colors.onSurfaceVariant,
-                          }}
-                        >
-                          {room.Tower}
-                        </Text>
-
-                        <Text
-                          variant="bodySmall"
-                          style={{
-                            color: theme.colors.onSurfaceVariant,
-                          }}
-                        >
-                          {room.Level} • {room.Capacity} Pax
-                        </Text>
-                      </View>
-                    </View>
-
-                    <Chip
-                      compact
-                      style={{
-                        backgroundColor: `${statusColor}16`,
-                      }}
-                      textStyle={{
-                        color: statusColor,
-                        fontWeight: "700",
-                      }}
-                    >
-                      Available
+                        AVAILABLE
                     </Chip>
-                  </View>
-
-                  <Button
-                    mode="contained"
-                    onPress={() => handleBooking(room)}
-                    style={{
-                      borderRadius: tokens.radii.full,
-                      marginTop: tokens.spacing.xs,
-                    }}
-                  >
-                    Check Availability
-                  </Button>
+                    <View style={{ 
+                        backgroundColor: 'rgba(255,255,255,0.9)', 
+                        paddingHorizontal: 10, 
+                        paddingVertical: 4, 
+                        borderRadius: tokens.radii.full,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        gap: 4
+                    }}>
+                        <MaterialCommunityIcons name="account-group" size={14} color={theme.colors.primary} />
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: theme.colors.primary }}>
+                            {room.Capacity} Pax
+                        </Text>
+                    </View>
                 </View>
-              </Card>
-            </TouchableOpacity>
+              </ImageBackground>
+
+              <View style={{ padding: tokens.spacing.lg, gap: tokens.spacing.md }}>
+                <View style={{ gap: 2 }}>
+                  <Text variant="headlineSmall" style={{ fontWeight: "900", letterSpacing: -0.5 }}>
+                    {room.Room_Name}
+                  </Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <MaterialCommunityIcons name="map-marker-outline" size={14} color={theme.colors.onSurfaceVariant} />
+                    <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>
+                      {room.Tower} • {room.Level}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={{ flexDirection: 'row', gap: tokens.spacing.sm }}>
+                    <Button
+                        mode="contained"
+                        onPress={() => handleBooking(room)}
+                        style={{ flex: 1, borderRadius: tokens.radii.lg }}
+                        contentStyle={{ height: 48 }}
+                        labelStyle={{ fontWeight: '800', fontSize: 14 }}
+                    >
+                        Check Availability
+                    </Button>
+                    <TouchableOpacity 
+                        style={{ 
+                            width: 48, 
+                            height: 48, 
+                            borderRadius: tokens.radii.lg, 
+                            backgroundColor: theme.colors.surfaceVariant,
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                        }}
+                    >
+                        <MaterialCommunityIcons name="information-outline" size={24} color={theme.colors.onSurfaceVariant} />
+                    </TouchableOpacity>
+                </View>
+              </View>
+            </Card>
           );
         })}
       </View>

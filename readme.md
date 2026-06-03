@@ -137,3 +137,125 @@ FAITH focuses on:
 ## License
 
 Internal Project — FAITH Workspace Platform
+
+faithpwa/
+├─ .expo/
+│  ├─ web/
+│  │  └─ cache/
+│  │     └─ production/
+│  │        └─ images/
+│  │           └─ favicon/
+│  │              └─ favicon-a4e030697a7571b3e95d31860e4da55d2f98e5e861e2b55e414f45a8556828ba-contain-transparent/
+│  │                 └─ favicon-48.png
+│  ├─ devices.json
+│  └─ README.md
+├─ app/
+│  ├─ (tabs)/
+│  │  ├─ home/
+│  │  │  ├─ attendance/
+│  │  │  │  └─ index.tsx
+│  │  │  ├─ leave/
+│  │  │  │  ├─ apply.tsx
+│  │  │  │  └─ index.tsx
+│  │  │  ├─ newsflash/
+│  │  │  │  └─ index.tsx
+│  │  │  ├─ room/
+│  │  │  │  ├─ book.tsx
+│  │  │  │  └─ index.tsx
+│  │  │  ├─ _layout.tsx
+│  │  │  ├─ index.tsx
+│  │  │  └─ main.tsx
+│  │  ├─ settings/
+│  │  │  ├─ _layout.tsx
+│  │  │  ├─ index.tsx
+│  │  │  └─ update.tsx
+│  │  └─ _layout.tsx
+│  ├─ _layout.tsx
+│  └─ index.tsx
+├─ assets/
+│  ├─ img/
+│  │  ├─ logo.png
+│  │  └─ sublogo.png
+│  ├─ android-icon-background.png
+│  ├─ android-icon-foreground.png
+│  ├─ android-icon-monochrome.png
+│  ├─ favicon.png
+│  ├─ icon.png
+│  └─ splash-icon.png
+├─ components/
+│  ├─ attendance/
+│  │  ├─ attendaceInsight.tsx
+│  │  ├─ attendaceOverview.tsx
+│  │  └─ attendanceCard.tsx
+│  ├─ leave/
+│  │  └─ leaveList.tsx
+│  ├─ newsflash/
+│  │  ├─ newsflashCarousel.tsx
+│  │  └─ newsflashList.tsx
+│  ├─ overlay/
+│  │  ├─ alert.tsx
+│  │  ├─ confirm.tsx
+│  │  ├─ loader.tsx
+│  │  ├─ modal.tsx
+│  │  ├─ sheet.tsx
+│  │  └─ toast.tsx
+│  ├─ room/
+│  │  ├─ roomBento.tsx
+│  │  ├─ roomList.tsx
+│  │  └─ roomTimeSheet.tsx
+│  ├─ clinicModal.tsx
+│  ├─ datePicker.tsx
+│  ├─ documentModal.tsx
+│  ├─ head.tsx
+│  ├─ header.tsx
+│  ├─ navBar.tsx
+│  ├─ noData.tsx
+│  ├─ pickerModal.tsx
+│  ├─ rowtwo.tsx
+│  ├─ scrollTop.tsx
+│  ├─ section.tsx
+│  └─ tail.tsx
+├─ constants/
+│  ├─ attendance.ts
+│  ├─ design.ts
+│  ├─ leave.ts
+│  ├─ newsflash.ts
+│  ├─ room.ts
+│  └─ theme.ts
+├─ contexts/
+│  ├─ api/
+│  │  ├─ api.tsx
+│  │  ├─ attendance.tsx
+│  │  ├─ attendanceStore.ts
+│  │  ├─ auth.tsx
+│  │  ├─ balance.tsx
+│  │  ├─ broadcast.tsx
+│  │  ├─ broadcastStore.ts
+│  │  ├─ clinic.tsx
+│  │  ├─ leave.tsx
+│  │  ├─ leaveStore.ts
+│  │  ├─ room.tsx
+│  │  ├─ roomStore.ts
+│  │  ├─ staff.tsx
+│  │  └─ staffStore.ts
+│  ├─ authContext.tsx
+│  ├─ designContext.tsx
+│  ├─ overlayContext.tsx
+│  ├─ tabContext.tsx
+│  ├─ themeContext.tsx
+│  └─ tokenContext.tsx
+├─ dist/
+│  ├─ _expo/
+├─ hooks/
+├─ public/
+│  └─ sw.js
+├─ .env
+├─ .gitignore
+├─ app.json
+├─ babel.config.js
+├─ metro.config.js
+├─ package-lock.json
+├─ package.json
+├─ readme.md
+├─ tsconfig.json
+└─ vercel.json
