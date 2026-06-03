@@ -69,22 +69,27 @@ export default function RoomList() {
       const today = now.toISOString().split('T')[0];
       const isToday = selectedDate === today;
 
-      const timeSlots = Object.entries(res.availability)
+      const allSlots = Object.entries(res.availability)
         .map(([timeRange, data]) => {
           let isPast = false;
-          const startTimeStr = timeRange.split(' - ')[0];
+          const endTimeStr = timeRange.split(' - ')[1];
 
-          if (isToday && startTimeStr) {
-            const [timePart, ampm] = startTimeStr.split(' ');
+          if (isToday && endTimeStr) {
+            const [timePart, ampm] = endTimeStr.split(' ');
             let [hours, minutes] = timePart.split(':').map(Number);
             
             if (ampm === 'PM' && hours < 12) hours += 12;
             if (ampm === 'AM' && hours === 12) hours = 0;
             
-            const slotTime = new Date();
-            slotTime.setHours(hours, minutes, 0, 0);
+            const slotEndTime = new Date();
+            slotEndTime.setHours(hours, minutes, 0, 0);
+
+            // Special case: 12:00 AM as an end time refers to the start of the NEXT day
+            if (hours === 0 && minutes === 0 && ampm === 'AM') {
+              slotEndTime.setDate(slotEndTime.getDate() + 1);
+            }
             
-            if (now >= slotTime) {
+            if (now >= slotEndTime) {
               isPast = true;
             }
           }
@@ -96,8 +101,19 @@ export default function RoomList() {
             eventName: data.event_name,
             isPast
           };
-        })
-        .filter(slot => !slot.isPast);
+        });
+
+      // Filter: Keep a slot if it's not past, OR if its row partner (same hour) is not past
+      const timeSlots = allSlots.filter((slot, index) => {
+        if (!slot.isPast) return true;
+        
+        // Check partner in the same 2-column row
+        const isEven = index % 2 === 0;
+        const partnerIndex = isEven ? index + 1 : index - 1;
+        const partner = allSlots[partnerIndex];
+        
+        return partner && !partner.isPast;
+      });
 
       if (timeSlots.length === 0) {
         toast("No more available slots for today.");
