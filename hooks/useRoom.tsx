@@ -81,7 +81,7 @@ export const useRoom = () => {
     if (!payload) return;
 
     showLoader("Securing your room...");
-    
+
     try {
       const res = await createBooking(
         payload.bookDate,
@@ -95,14 +95,18 @@ export const useRoom = () => {
         staff?.email || ""
       );
 
+      // We wait for the store's loading state to settle
+      hideLoader();
+
       if ('error' in res) {
-        hideLoader();
         toast({ message: res.error, variant: 'error' });
         return res;
       } else {
-        hideLoader();
-        onSuccess?.();
-        toast({ message: "Room booked successfully!", variant: 'success' });
+        // Delay slightly to allow loader to dismiss before closing sheet and showing toast
+        setTimeout(() => {
+          onSuccess?.();
+          toast({ message: "Room booked successfully!", variant: 'success' });
+        }, 300);
         return res;
       }
     } catch (err: any) {

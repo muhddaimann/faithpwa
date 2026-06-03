@@ -29,7 +29,8 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
     setPurpose, 
     confirmBooking,
     isBookingValid,
-    selectedDate 
+    selectedDate,
+    loading
   } = useRoom();
 
   const [step, setStep] = useState(1); // 1: Slots, 2: Purpose
@@ -40,6 +41,7 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
     
     if (slot.isPast) {
       toast("Cannot select past time slots");
+      setSelectedSlots([]);
       return;
     }
 
@@ -51,34 +53,30 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
 
     setViewingSlot(null);
 
-    if (selectedSlots.length === 0 || selectedSlots.length > 1) {
-      if (selectedSlots.length === 1 && selectedSlots[0] === slot.label) {
-        setSelectedSlots([]);
-      } else {
-        setSelectedSlots([slot.label]);
-      }
-      return;
-    }
-
-    const startIndex = timeSlots.findIndex(s => s.label === selectedSlots[0]);
-    if (index === startIndex) {
+    // If tapping an already selected slot, clear everything
+    if (selectedSlots.includes(slot.label)) {
       setSelectedSlots([]);
       return;
     }
 
-    if (index < startIndex) {
+    if (selectedSlots.length === 0) {
       setSelectedSlots([slot.label]);
       return;
     }
 
-    const range = timeSlots.slice(startIndex, index + 1);
-    const hasOccupied = range.some(s => !s.isAvailable);
+    const startIndex = timeSlots.findIndex(s => s.label === selectedSlots[0]);
+    const startIdx = Math.min(startIndex, index);
+    const endIdx = Math.max(startIndex, index);
+    const range = timeSlots.slice(startIdx, endIdx + 1);
 
-    if (hasOccupied) {
-      setSelectedSlots([slot.label]);
-    } else {
-      setSelectedSlots(range.map(s => s.label));
+    // Check if the range contains any unavailable slots
+    if (range.some(s => !s.isAvailable || s.isPast)) {
+      setSelectedSlots([]);
+      toast("Range contains unavailable slots");
+      return;
     }
+
+    setSelectedSlots(range.map(s => s.label));
   };
 
   const bookingSummary = useMemo(() => {
@@ -215,8 +213,8 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
             contentStyle={{ height: 54 }}
             style={{ 
               borderRadius: tokens.radii.xl,
-              backgroundColor: viewingSlot ? theme.colors.surfaceVariant : theme.colors.primary 
             }}
+            buttonColor={viewingSlot ? theme.colors.surfaceVariant : theme.colors.primary}
             labelStyle={{ 
               fontWeight: '900', 
               fontSize: viewingSlot ? 13 : 15,
@@ -301,11 +299,12 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
       <View style={{ paddingTop: tokens.spacing.xl }}>
         <Button
             mode="contained"
-            disabled={!isBookingValid}
+            disabled={!isBookingValid || loading}
             onPress={handleConfirm}
             contentStyle={{ height: 56 }}
             style={{ borderRadius: tokens.radii.pill }}
             labelStyle={{ fontWeight: '900', fontSize: 16 }}
+            loading={loading}
         >
             Confirm Reservation
         </Button>
