@@ -20,8 +20,9 @@ type Props = {
 export default function RoomTimeSheet({ room, timeSlots }: Props) {
   const theme = useTheme();
   const tokens = useDesign();
-  const { hideSheet } = useOverlay();
+  const { hideSheet, toast } = useOverlay();
   const { 
+    staff,
     selectedSlots, 
     setSelectedSlots,
     purpose, 
@@ -37,7 +38,12 @@ export default function RoomTimeSheet({ room, timeSlots }: Props) {
   const handleSlotPress = (index: number) => {
     const slot = timeSlots[index];
     
-    if (!slot.isAvailable || slot.isPast) {
+    if (slot.isPast) {
+      toast("Cannot select past time slots");
+      return;
+    }
+
+    if (!slot.isAvailable) {
       setViewingSlot(slot);
       setSelectedSlots([]);
       return;

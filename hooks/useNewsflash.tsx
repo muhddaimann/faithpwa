@@ -32,11 +32,11 @@ export const useNewsflash = (limit?: number) => {
   const handleAcknowledge = async (id: number) => {
     // In a real app, you would call an API here
     // await acknowledgeBroadcast(id);
+    hideSheet();
     toast({
       message: 'Announcement acknowledged',
       variant: 'success',
     });
-    hideSheet();
   };
 
   const normalizePriority = (p?: string): keyof typeof newsflashPriorities => {

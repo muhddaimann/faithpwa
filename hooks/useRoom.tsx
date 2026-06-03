@@ -96,18 +96,19 @@ export const useRoom = () => {
       );
 
       if ('error' in res) {
+        hideLoader();
         toast({ message: res.error, variant: 'error' });
         return res;
       } else {
-        toast({ message: "Room booked successfully!", variant: 'success' });
+        hideLoader();
         onSuccess?.();
+        toast({ message: "Room booked successfully!", variant: 'success' });
         return res;
       }
     } catch (err: any) {
+      hideLoader();
       toast({ message: err.message || "Failed to book room", variant: 'error' });
       return { error: err.message };
-    } finally {
-      hideLoader();
     }
   };
 
@@ -128,6 +129,7 @@ export const useRoom = () => {
     clearRoomData: clear,
 
     // Booking Flow State
+    staff,
     selectedRoom,
     setSelectedRoom,
     selectedSlots,

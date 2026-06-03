@@ -6,7 +6,7 @@ import { useDesign } from "../../contexts/designContext";
 import { useRoom } from "../../hooks/useRoom";
 import { useOverlay } from "../../contexts/overlayContext";
 import { Room } from "../../contexts/api/room";
-import RoomTimeSheet from "./roomTimeSheet";
+import RoomTimeSheet from "./roomSheet";
 
 export default function RoomList() {
   const theme = useTheme();
@@ -66,30 +66,25 @@ export default function RoomList() {
       setPurpose("");
 
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
-      const isToday = selectedDate === today;
+      const localToday = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const isToday = selectedDate === localToday;
 
       const allSlots = Object.entries(res.availability)
         .map(([timeRange, data]) => {
           let isPast = false;
-          const endTimeStr = timeRange.split(' - ')[1];
+          const startTimeStr = timeRange.split(' - ')[0];
 
-          if (isToday && endTimeStr) {
-            const [timePart, ampm] = endTimeStr.split(' ');
+          if (isToday && startTimeStr) {
+            const [timePart, ampm] = startTimeStr.split(' ');
             let [hours, minutes] = timePart.split(':').map(Number);
             
             if (ampm === 'PM' && hours < 12) hours += 12;
             if (ampm === 'AM' && hours === 12) hours = 0;
             
-            const slotEndTime = new Date();
-            slotEndTime.setHours(hours, minutes, 0, 0);
-
-            // Special case: 12:00 AM as an end time refers to the start of the NEXT day
-            if (hours === 0 && minutes === 0 && ampm === 'AM') {
-              slotEndTime.setDate(slotEndTime.getDate() + 1);
-            }
+            const slotStartTime = new Date();
+            slotStartTime.setHours(hours, minutes, 0, 0);
             
-            if (now >= slotEndTime) {
+            if (now >= slotStartTime) {
               isPast = true;
             }
           }

@@ -52,7 +52,7 @@ interface RoomState {
 export const useRoomStore = create<RoomState>((set, get) => ({
   rooms: [],
   myBookings: [],
-  selectedDate: new Date().toISOString().split('T')[0],
+  selectedDate: new Date().toLocaleDateString('en-CA'),
   loading: false,
   error: null,
 

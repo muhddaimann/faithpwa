@@ -191,6 +191,7 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
       }
 
       const res = await addNewLeave(formData);
+      hideLoader();
       if (res.status === "success") {
         toast({
           message: "Leave application submitted successfully!",
@@ -204,12 +205,11 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
         });
       }
     } catch (err: any) {
+      hideLoader();
       toast({
         message: err.message || "An unexpected error occurred",
         variant: "error",
       });
-    } finally {
-      hideLoader();
     }
   };
 
@@ -231,11 +231,11 @@ export const useLeave = (statusFilter: LeaveStatus = 'All') => {
       onConfirm: async () => {
         const res = await withdraw(id);
         if (res.success) {
+          hideSheet();
           toast({
             message: 'Leave application withdrawn successfully',
             variant: 'success',
           });
-          hideSheet();
         } else {
           toast({
             message: res.error || 'Failed to withdraw application',
