@@ -1,10 +1,14 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useCallback } from 'react';
+import { View } from 'react-native';
+import { Text, Divider, Button, useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRoomStore } from '../contexts/api/roomStore';
-import { getRoomAvailabilityByDay } from '../contexts/api/room';
+import { getRoomAvailabilityByDay, type BookingItem } from '../contexts/api/room';
 import { useOverlay } from '../contexts/overlayContext';
 import { useStaff } from './useStaff';
 
 export const useRoom = () => {
+  const theme = useTheme();
   const {
     rooms,
     myBookings,
@@ -24,12 +28,12 @@ export const useRoom = () => {
     setPurpose,
     
     createBooking,
-    cancelBooking,
+    cancelBooking: apiCancelBooking,
     clear,
   } = useRoomStore();
 
   const { staff } = useStaff();
-  const { toast, showLoader, hideLoader } = useOverlay();
+  const { toast, showLoader, hideLoader, showSheet, hideSheet, confirm } = useOverlay();
 
   // Initial fetch of rooms and bookings
   useEffect(() => {
@@ -116,6 +120,105 @@ export const useRoom = () => {
     }
   };
 
+  const handleCancel = useCallback((booking: BookingItem) => {
+    confirm({
+      title: 'Cancel Reservation',
+      message: 'Are you sure you want to cancel this room booking?',
+      confirmText: 'Cancel Booking',
+      isDestructive: true,
+      onConfirm: async () => {
+        showLoader("Cancelling reservation...");
+        try {
+          const res = await apiCancelBooking(booking.Booking_Num);
+          hideLoader();
+          if (res.execute_success) {
+            hideSheet();
+            setTimeout(() => {
+                toast({
+                    message: "Booking cancelled successfully",
+                    variant: "success"
+                });
+            }, 300);
+          } else {
+            toast({
+                message: "Failed to cancel booking",
+                variant: "error"
+            });
+          }
+        } catch (err) {
+          hideLoader();
+          toast({
+            message: "An unexpected error occurred",
+            variant: "error"
+          });
+        }
+      }
+    });
+  }, [apiCancelBooking, confirm, showLoader, hideLoader, hideSheet, toast]);
+
+  const showBookingDetails = useCallback((booking: BookingItem) => {
+    const isUpcoming = booking.Tag === 'Upcoming';
+    
+    showSheet({
+      content: (
+        <View style={{ gap: 20, paddingBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+            <View style={{ 
+              backgroundColor: booking.Tag === 'Upcoming' ? '#3B82F620' : booking.Tag === 'Cancelled' ? '#EF444420' : '#10B98120', 
+              padding: 12, 
+              borderRadius: 16 
+            }}>
+              <MaterialCommunityIcons 
+                name={booking.Tag === 'Upcoming' ? "calendar-clock" : booking.Tag === 'Cancelled' ? "calendar-remove" : "calendar-check"} 
+                size={32} 
+                color={booking.Tag === 'Upcoming' ? '#3B82F6' : booking.Tag === 'Cancelled' ? '#EF4444' : '#10B981'} 
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text variant="titleLarge" style={{ fontWeight: "800" }}>{booking.Room_Name}</Text>
+              <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>{booking.Booking_Num} • {booking.Tag}</Text>
+            </View>
+          </View>
+
+          <Divider />
+
+          <View style={{ gap: 8 }}>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>TIME & LOCATION</Text>
+            <Text variant="titleMedium" style={{ fontWeight: "700" }}>
+                {new Date(booking.Start_Date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+            </Text>
+            <Text variant="bodyLarge">
+                {new Date(booking.Start_Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - {new Date(booking.End_Date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            </Text>
+            <Text variant="bodyMedium" style={{ color: theme.colors.onSurfaceVariant }}>
+                {booking.Tower} • {booking.Level}
+            </Text>
+          </View>
+
+          <View style={{ gap: 8 }}>
+            <Text variant="labelSmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: "700" }}>PURPOSE</Text>
+            <View style={{ backgroundColor: theme.colors.surfaceVariant + "40", padding: 16, borderRadius: 12 }}>
+              <Text variant="bodyMedium" style={{ lineHeight: 22 }}>{booking.Event_Name}</Text>
+            </View>
+          </View>
+
+          {isUpcoming && (
+            <Button 
+              mode="contained-tonal" 
+              onPress={() => handleCancel(booking)}
+              style={{ marginTop: 8, borderRadius: 12 }}
+              buttonColor={theme.colors.errorContainer}
+              textColor={theme.colors.onErrorContainer}
+              contentStyle={{ height: 48 }}
+            >
+              CANCEL RESERVATION
+            </Button>
+          )}
+        </View>
+      )
+    });
+  }, [showSheet, theme, handleCancel]);
+
   return {
     rooms,
     myBookings,
@@ -128,7 +231,8 @@ export const useRoom = () => {
     refreshBookings: fetchBookings,
     book: createBooking,
     confirmBooking,
-    cancel: cancelBooking,
+    cancel: handleCancel,
+    showBookingDetails,
     getAvailability: getRoomAvailabilityByDay,
     clearRoomData: clear,
 

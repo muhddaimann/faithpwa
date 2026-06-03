@@ -2,6 +2,7 @@ import React, { useState, useMemo } from "react";
 import { TouchableOpacity, View } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 import { design } from "../../constants/design";
 import { useOverlay } from "../../contexts/overlayContext";
 import { DatePickerContent } from "../datePicker";
@@ -9,6 +10,7 @@ import { useRoom } from "../../hooks/useRoom";
 
 export default function RoomBento() {
   const theme = useTheme();
+  const router = useRouter();
   const { showModal, hideModal, toast } = useOverlay();
   const { stats, selectedDate, setSelectedDate } = useRoom();
   const { spacing, radii } = design;
@@ -143,6 +145,7 @@ export default function RoomBento() {
           {/* Booking History Card */}
           <TouchableOpacity
             activeOpacity={0.8}
+            onPress={() => router.push("home/room/bookings")}
             style={{
               flex: 1,
               borderRadius: 24,
