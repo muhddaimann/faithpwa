@@ -1,17 +1,20 @@
-import React, { useState, useMemo, useCallback } from 'react';
-import { View, ScrollView, RefreshControl } from 'react-native';
+import React, { useState, useMemo, useCallback, useRef } from 'react';
+import { View, ScrollView, RefreshControl, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { Text, useTheme, SegmentedButtons, Card, Chip, IconButton, Divider} from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useDesign } from '../../../../contexts/designContext';
 import { useRoom } from '../../../../hooks/useRoom';
 import Header from '../../../../components/header';
 import NoData from '../../../../components/noData';
+import ScrollTop from '../../../../components/scrollTop';
 
 export default function Bookings() {
   const theme = useTheme();
   const tokens = useDesign();
   const { myBookings, loading, refreshBookings, showBookingDetails } = useRoom();
   const [filter, setFilter] = useState('Upcoming');
+  const scrollViewRef = useRef<ScrollView | null>(null);
+  const [showScrollTop, setShowScrollTop] = useState(false);
 
   const filteredBookings = useMemo(() => {
     return myBookings.filter(b => b.Tag === filter);
@@ -20,6 +23,15 @@ export default function Bookings() {
   const onRefresh = useCallback(() => {
     refreshBookings();
   }, [refreshBookings]);
+
+  const handleScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offset = e.nativeEvent.contentOffset.y;
+    setShowScrollTop(offset > 300);
+  };
+
+  const scrollToTop = () => {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  };
 
   const getStatusColor = (tag: string) => {
     switch (tag) {
@@ -33,6 +45,9 @@ export default function Bookings() {
   return (
     <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
       <ScrollView 
+        ref={scrollViewRef}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         contentContainerStyle={{ 
           paddingHorizontal: tokens.spacing.lg,
           paddingBottom: tokens.spacing["3xl"],
@@ -142,6 +157,7 @@ export default function Bookings() {
           </View>
         )}
       </ScrollView>
+      <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
     </View>
   );
 }
