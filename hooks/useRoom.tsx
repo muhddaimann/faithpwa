@@ -2,13 +2,23 @@ import { useEffect, useMemo, useCallback } from 'react';
 import { View } from 'react-native';
 import { Text, Divider, Button, useTheme } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useRoomStore } from '../contexts/api/roomStore';
-import { getRoomAvailabilityByDay, type BookingItem } from '../contexts/api/room';
+import { getRoomAvailabilityByDay, type BookingItem, type Room } from '../contexts/api/room';
 import { useOverlay } from '../contexts/overlayContext';
 import { useStaff } from './useStaff';
 
+export type TimeSlot = {
+  label: string;
+  isAvailable: boolean;
+  pic: string | null;
+  eventName: string | null;
+  isPast?: boolean;
+};
+
 export const useRoom = () => {
   const theme = useTheme();
+  const router = useRouter();
   const {
     rooms,
     myBookings,
@@ -60,7 +70,7 @@ export const useRoom = () => {
   }, [selectedRoom, selectedSlots, purpose]);
 
   // Return a prepared booking payload and calculation
-  const getBookingPayload = () => {
+  const getBookingPayload = useCallback(() => {
     if (!selectedRoom || selectedSlots.length === 0) return null;
 
     const firstRange = selectedSlots[0];
@@ -78,9 +88,9 @@ export const useRoom = () => {
       level: selectedRoom.Level,
       purpose,
     };
-  };
+  }, [selectedRoom, selectedSlots, selectedDate, purpose]);
 
-  const confirmBooking = async (onSuccess?: () => void) => {
+  const confirmBooking = useCallback(async (onSuccess?: () => void) => {
     const payload = getBookingPayload();
     if (!payload) return;
 
@@ -106,10 +116,13 @@ export const useRoom = () => {
         toast({ message: res.error, variant: 'error' });
         return res;
       } else {
-        // Delay slightly to allow loader to dismiss before closing sheet and showing toast
+        // Close sheet immediately
+        onSuccess?.();
+        
+        // Delay toast slightly to allow loader to dismiss and navigate
         setTimeout(() => {
-          onSuccess?.();
           toast({ message: "Room booked successfully!", variant: 'success' });
+          router.replace('/home/room/bookings');
         }, 300);
         return res;
       }
@@ -118,7 +131,7 @@ export const useRoom = () => {
       toast({ message: err.message || "Failed to book room", variant: 'error' });
       return { error: err.message };
     }
-  };
+  }, [getBookingPayload, showLoader, createBooking, staff, hideLoader, toast, router]);
 
   const handleCancel = useCallback((booking: BookingItem) => {
     confirm({
@@ -219,6 +232,89 @@ export const useRoom = () => {
     });
   }, [showSheet, theme, handleCancel]);
 
+  const prepareBooking = useCallback(async (room: Room) => {
+    showLoader(`Checking availability for ${room.Room_Name}...`);
+    
+    try {
+      const res = await getRoomAvailabilityByDay(room.room_id, selectedDate);
+      hideLoader();
+
+      if ('error' in res) {
+        toast({ message: res.error, variant: 'error' });
+        return null;
+      }
+
+      // Reset flow state
+      setSelectedRoom(room);
+      setSelectedSlots([]);
+      setPurpose("");
+
+      const now = new Date();
+      const localToday = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+      const isToday = selectedDate === localToday;
+
+      const allSlots: TimeSlot[] = Object.entries(res.availability)
+        .map(([timeRange, data]) => {
+          let isPast = false;
+          const startTimeStr = timeRange.split(' - ')[0];
+
+          if (isToday && startTimeStr) {
+            const [timePart, ampm] = startTimeStr.split(' ');
+            let [hours, minutes] = timePart.split(':').map(Number);
+            
+            if (ampm === 'PM' && hours < 12) hours += 12;
+            if (ampm === 'AM' && hours === 12) hours = 0;
+            
+            const slotStartTime = new Date();
+            slotStartTime.setHours(hours, minutes, 0, 0);
+            
+            if (now >= slotStartTime) {
+              isPast = true;
+            }
+          }
+
+          return {
+            label: timeRange,
+            isAvailable: data.status === 'Available',
+            pic: data.PIC,
+            eventName: data.event_name,
+            isPast
+          };
+        });
+
+      // Filter: Keep a slot if it's not past, OR if its row partner (same hour) is not past
+      const timeSlots = allSlots.filter((slot, index) => {
+        if (!slot.isPast) return true;
+        
+        // Check partner in the same 2-column row
+        const isEven = index % 2 === 0;
+        const partnerIndex = isEven ? index + 1 : index - 1;
+        const partner = allSlots[partnerIndex];
+        
+        return partner && !partner.isPast;
+      });
+
+      if (timeSlots.length === 0) {
+        toast({ message: "No more available slots for today.", variant: 'info' });
+        return null;
+      }
+
+      return timeSlots;
+    } catch (error: any) {
+      hideLoader();
+      toast({ message: "Failed to fetch availability", variant: 'error' });
+      return null;
+    }
+  }, [selectedDate, setSelectedRoom, setSelectedSlots, setPurpose, showLoader, hideLoader, toast]);
+
+  const proceedToBooking = useCallback(() => {
+    hideSheet();
+    // Allow sheet animation to complete before navigation
+    setTimeout(() => {
+      router.push('/home/room/book');
+    }, 250);
+  }, [hideSheet, router]);
+
   return {
     rooms,
     myBookings,
@@ -234,6 +330,8 @@ export const useRoom = () => {
     cancel: handleCancel,
     showBookingDetails,
     getAvailability: getRoomAvailabilityByDay,
+    prepareBooking,
+    proceedToBooking,
     clearRoomData: clear,
 
     // Booking Flow State
@@ -247,5 +345,6 @@ export const useRoom = () => {
     setPurpose,
     isBookingValid,
     getBookingPayload,
+    router,
   };
 };

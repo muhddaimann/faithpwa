@@ -27,10 +27,64 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
   const tokens = useDesign();
   const insets = useSafeAreaInsets();
 
+  // Local state to track if we should actually render the component
+  // This allows us to keep it in the DOM during the exit animation
+  const [shouldRender, setShouldRender] = React.useState(visible);
+
   const pan = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const backdropOpacity = useRef(new Animated.Value(0)).current;
 
   const maxSheetHeight = SCREEN_HEIGHT - insets.top - tokens.spacing.md;
+
+  const show = () => {
+    setShouldRender(true);
+    Animated.parallel([
+      Animated.spring(pan, {
+        toValue: 0,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const hide = (callback?: () => void) => {
+    Animated.parallel([
+      Animated.timing(pan, {
+        toValue: SCREEN_HEIGHT,
+        duration: 200, // Slightly longer for smoother exit
+        useNativeDriver: true,
+      }),
+      Animated.timing(backdropOpacity, {
+        toValue: 0,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setShouldRender(false);
+      callback?.();
+      pan.setValue(SCREEN_HEIGHT);
+    });
+  };
+
+  useEffect(() => {
+    if (visible) {
+      show();
+    } else if (shouldRender) {
+      // If prop changed to false but we are still rendering, trigger animation
+      hide();
+    }
+  }, [visible]);
+
+  const handleManualDismiss = () => {
+    // This is for backdrop taps or swipes
+    hide(onDismiss);
+  };
 
   const panResponder = useRef(
     PanResponder.create({
@@ -51,7 +105,7 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
 
       onPanResponderRelease: (_, gestureState) => {
         if (gestureState.dy > SWIPE_THRESHOLD || gestureState.vy > 0.5) {
-          hide();
+          handleManualDismiss();
         } else {
           Animated.spring(pan, {
             toValue: 0,
@@ -64,45 +118,7 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
     }),
   ).current;
 
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.spring(pan, {
-          toValue: 0,
-          tension: 50,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-
-        Animated.timing(backdropOpacity, {
-          toValue: 1,
-          duration: 180,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible]);
-
-  const hide = () => {
-    Animated.parallel([
-      Animated.timing(pan, {
-        toValue: SCREEN_HEIGHT,
-        duration: 180,
-        useNativeDriver: true,
-      }),
-
-      Animated.timing(backdropOpacity, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      onDismiss();
-      pan.setValue(SCREEN_HEIGHT);
-    });
-  };
-
-  if (!visible) return null;
+  if (!shouldRender && !visible) return null;
 
   return (
     <Portal>
@@ -117,7 +133,7 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
           justifyContent: "flex-end",
         }}
       >
-        <TouchableWithoutFeedback onPress={hide}>
+        <TouchableWithoutFeedback onPress={handleManualDismiss}>
           <Animated.View
             style={{
               position: "absolute",

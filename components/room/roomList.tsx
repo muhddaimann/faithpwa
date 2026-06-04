@@ -1,18 +1,222 @@
 import React, { useMemo, useState } from "react";
-import { View, TouchableOpacity, ScrollView, Image, ImageBackground } from "react-native";
-import { Card, Text, Chip, Button, useTheme } from "react-native-paper";
+import { View, TouchableOpacity, ScrollView, ImageBackground } from "react-native";
+import { Card, Text, Chip, Button, useTheme, Divider } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../contexts/designContext";
-import { useRoom } from "../../hooks/useRoom";
+import { useRoom, type TimeSlot } from "../../hooks/useRoom";
 import { useOverlay } from "../../contexts/overlayContext";
 import { Room } from "../../contexts/api/room";
-import RoomTimeSheet from "./roomSheet";
+
+type SheetProps = {
+  room: Room;
+  timeSlots: TimeSlot[];
+};
+
+function RoomBookingSheet({ room, timeSlots }: SheetProps) {
+  const theme = useTheme();
+  const tokens = useDesign();
+  const { toast } = useOverlay();
+  const { 
+    selectedSlots, 
+    setSelectedSlots,
+    selectedDate,
+    proceedToBooking,
+  } = useRoom();
+
+  const [viewingSlot, setViewingSlot] = useState<TimeSlot | null>(null);
+
+  const handleSlotPress = (index: number) => {
+    const slot = timeSlots[index];
+    
+    if (slot.isPast) {
+      toast("Cannot select past time slots");
+      setSelectedSlots([]);
+      return;
+    }
+
+    if (!slot.isAvailable) {
+      setViewingSlot(slot);
+      setSelectedSlots([]);
+      return;
+    }
+
+    setViewingSlot(null);
+
+    if (selectedSlots.includes(slot.label)) {
+      setSelectedSlots([]);
+      return;
+    }
+
+    if (selectedSlots.length === 0) {
+      setSelectedSlots([slot.label]);
+      return;
+    }
+
+    const startIndex = timeSlots.findIndex(s => s.label === selectedSlots[0]);
+    const startIdx = Math.min(startIndex, index);
+    const endIdx = Math.max(startIndex, index);
+    const range = timeSlots.slice(startIdx, endIdx + 1);
+
+    if (range.some(s => !s.isAvailable || s.isPast)) {
+      setSelectedSlots([]);
+      toast("Range contains unavailable slots");
+      return;
+    }
+
+    setSelectedSlots(range.map(s => s.label));
+  };
+
+  const bookingSummary = useMemo(() => {
+    if (selectedSlots.length === 0) return null;
+    const firstSlot = selectedSlots[0];
+    const lastSlot = selectedSlots[selectedSlots.length - 1];
+    
+    if (!firstSlot || !lastSlot) return null;
+
+    const start = firstSlot.split(' - ')[0];
+    const end = lastSlot.split(' - ')[1];
+    const duration = selectedSlots.length * 0.5;
+    return { start, end, duration };
+  }, [selectedSlots]);
+
+  return (
+    <View style={{ maxHeight: 580 }}>
+      <View style={{ paddingBottom: tokens.spacing.md }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+          <Text variant="titleLarge" style={{ fontWeight: "900", letterSpacing: -0.5 }}>{room.Room_Name}</Text>
+          <Chip 
+            compact 
+            style={{ backgroundColor: theme.colors.primaryContainer }}
+            textStyle={{ color: theme.colors.onPrimaryContainer, fontWeight: '800', fontSize: 10 }}
+          >
+            {room.Capacity} Pax
+          </Chip>
+        </View>
+        <Text variant="bodySmall" style={{ color: theme.colors.onSurfaceVariant, fontWeight: '600' }}>
+          {selectedDate} • {room.Tower} • {room.Level}
+        </Text>
+        <Divider style={{ marginTop: tokens.spacing.md }} />
+      </View>
+
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        style={{ flexGrow: 0 }}
+        contentContainerStyle={{ paddingVertical: tokens.spacing.xs }}
+      >
+        <Text variant="labelLarge" style={{ fontWeight: '800', color: theme.colors.onSurface, marginBottom: tokens.spacing.sm }}>
+          Select Time Range
+        </Text>
+        
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: tokens.spacing.xs }}>
+          {timeSlots.map((slot, index) => {
+            const isSelected = selectedSlots.includes(slot.label);
+            const isStart = isSelected && selectedSlots[0] === slot.label;
+            const isEnd = isSelected && selectedSlots[selectedSlots.length - 1] === slot.label;
+            const isMiddle = isSelected && !isStart && !isEnd;
+
+            return (
+              <TouchableOpacity
+                key={index}
+                onPress={() => handleSlotPress(index)}
+                activeOpacity={0.7}
+                style={{
+                  width: "48.5%",
+                  height: 52,
+                  borderRadius: tokens.radii.md,
+                  alignItems: "center",
+                  justifyContent: "center",
+                  backgroundColor: isSelected 
+                    ? isMiddle ? theme.colors.primary + "15" : theme.colors.primary
+                    : !slot.isAvailable && !slot.isPast
+                      ? theme.colors.errorContainer + "30"
+                      : slot.isAvailable && !slot.isPast
+                        ? theme.colors.surfaceVariant + "40" 
+                        : theme.colors.surfaceVariant + "10",
+                  borderWidth: 1,
+                  borderColor: isSelected 
+                      ? "transparent"
+                      : !slot.isAvailable && !slot.isPast
+                          ? theme.colors.error + "20"
+                          : slot.isAvailable && !slot.isPast 
+                              ? theme.colors.outline + "15" 
+                              : "transparent",
+                  opacity: slot.isPast ? 0.5 : 1,
+                  ...(isStart && selectedSlots.length > 1 && { borderTopRightRadius: 0, borderBottomRightRadius: 0 }),
+                  ...(isEnd && selectedSlots.length > 1 && { borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }),
+                  ...(isMiddle && { borderRadius: 0 }),
+                }}
+              >
+                <Text style={{ 
+                  fontSize: 10, 
+                  fontWeight: isSelected ? "900" : "700",
+                  color: isSelected 
+                    ? isMiddle ? theme.colors.primary : theme.colors.onPrimary
+                    : !slot.isAvailable && !slot.isPast
+                      ? theme.colors.error
+                      : slot.isAvailable && !slot.isPast 
+                          ? theme.colors.onSurface 
+                          : theme.colors.onSurfaceVariant,
+                }}>
+                  {slot.label.replace(' - ', ' - ')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </ScrollView>
+
+      <View style={{ paddingTop: tokens.spacing.md, gap: tokens.spacing.md }}>
+        <View style={{ flexDirection: 'row', gap: tokens.spacing.sm, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: theme.colors.surfaceVariant + "40", borderWidth: 1, borderColor: theme.colors.outline + "20" }} />
+                <Text style={{ fontSize: 9, fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Available</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: theme.colors.primary }} />
+                <Text style={{ fontSize: 9, fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Selected</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: theme.colors.errorContainer + "30", borderWidth: 1, borderColor: theme.colors.error + "20" }} />
+                <Text style={{ fontSize: 9, fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Booked</Text>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <View style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: theme.colors.surfaceVariant + "10" }} />
+                <Text style={{ fontSize: 9, fontWeight: '700', color: theme.colors.onSurfaceVariant }}>Past</Text>
+            </View>
+        </View>
+
+        <Button
+          mode="contained"
+          disabled={selectedSlots.length === 0}
+          onPress={proceedToBooking}
+          contentStyle={{ height: 54 }}
+          style={{ 
+            borderRadius: tokens.radii.xl,
+          }}
+          buttonColor={viewingSlot ? theme.colors.surfaceVariant : theme.colors.primary}
+          labelStyle={{ 
+            fontWeight: '900', 
+            fontSize: viewingSlot ? 13 : 15,
+            color: viewingSlot ? theme.colors.onSurfaceVariant : theme.colors.onPrimary
+          }}
+        >
+          {viewingSlot 
+            ? `${viewingSlot.eventName || "Private Event"}`
+            : bookingSummary 
+              ? `Select Purpose: ${bookingSummary.start} - ${bookingSummary.end}`
+              : "Select Time Range"
+          }
+        </Button>
+      </View>
+    </View>
+  );
+}
 
 export default function RoomList() {
   const theme = useTheme();
   const tokens = useDesign();
-  const { showSheet, toast, showLoader, hideLoader } = useOverlay();
-  const { rooms, getAvailability, selectedDate, setSelectedRoom, setSelectedSlots, setPurpose } = useRoom();
+  const { showSheet } = useOverlay();
+  const { rooms, prepareBooking } = useRoom();
 
   const [selectedTower, setSelectedTower] = useState("all");
   const [selectedLevel, setSelectedLevel] = useState("all");
@@ -49,78 +253,11 @@ export default function RoomList() {
   }, [selectedTower, selectedLevel, rooms]);
 
   const handleBooking = async (room: Room) => {
-    showLoader(`Checking availability for ${room.Room_Name}...`);
-    
-    try {
-      const res = await getAvailability(room.room_id, selectedDate);
-      hideLoader();
-
-      if ('error' in res) {
-        toast(res.error);
-        return;
-      }
-
-      // Reset flow state
-      setSelectedRoom(room);
-      setSelectedSlots([]);
-      setPurpose("");
-
-      const now = new Date();
-      const localToday = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
-      const isToday = selectedDate === localToday;
-
-      const allSlots = Object.entries(res.availability)
-        .map(([timeRange, data]) => {
-          let isPast = false;
-          const startTimeStr = timeRange.split(' - ')[0];
-
-          if (isToday && startTimeStr) {
-            const [timePart, ampm] = startTimeStr.split(' ');
-            let [hours, minutes] = timePart.split(':').map(Number);
-            
-            if (ampm === 'PM' && hours < 12) hours += 12;
-            if (ampm === 'AM' && hours === 12) hours = 0;
-            
-            const slotStartTime = new Date();
-            slotStartTime.setHours(hours, minutes, 0, 0);
-            
-            if (now >= slotStartTime) {
-              isPast = true;
-            }
-          }
-
-          return {
-            label: timeRange,
-            isAvailable: data.status === 'Available',
-            pic: data.PIC,
-            eventName: data.event_name,
-            isPast
-          };
-        });
-
-      // Filter: Keep a slot if it's not past, OR if its row partner (same hour) is not past
-      const timeSlots = allSlots.filter((slot, index) => {
-        if (!slot.isPast) return true;
-        
-        // Check partner in the same 2-column row
-        const isEven = index % 2 === 0;
-        const partnerIndex = isEven ? index + 1 : index - 1;
-        const partner = allSlots[partnerIndex];
-        
-        return partner && !partner.isPast;
-      });
-
-      if (timeSlots.length === 0) {
-        toast("No more available slots for today.");
-        return;
-      }
-
+    const timeSlots = await prepareBooking(room);
+    if (timeSlots) {
       showSheet({
-        content: <RoomTimeSheet room={room} timeSlots={timeSlots} />,
+        content: <RoomBookingSheet room={room} timeSlots={timeSlots} />,
       });
-    } catch (error) {
-      hideLoader();
-      toast("Failed to fetch availability. Please try again.");
     }
   };
 
