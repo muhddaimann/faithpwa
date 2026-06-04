@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, View, Pressable, Easing } from "react-native";
+import { Animated, View, Pressable, Easing, Platform } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { usePathname, router } from "expo-router";
 import { useDesign } from "../contexts/designContext";
@@ -41,7 +41,7 @@ export function NavBar() {
       toValue: effectivelyHidden ? 120 : 0,
       duration: 300,
       easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [effectivelyHidden]);
 

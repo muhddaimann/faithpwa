@@ -5,6 +5,7 @@ import {
   Pressable,
   Animated,
   Easing,
+  Platform,
 } from "react-native";
 import { Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -60,7 +61,7 @@ export default function NewsflashCarousel() {
         toValue,
         duration: 600,
         easing: Easing.out(Easing.exp),
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
 
       setActiveIndex(nextIndex);

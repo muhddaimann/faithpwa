@@ -43,12 +43,12 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
         toValue: 0,
         tension: 50,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(backdropOpacity, {
         toValue: 1,
         duration: 180,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
   };
@@ -58,12 +58,12 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
       Animated.timing(pan, {
         toValue: SCREEN_HEIGHT,
         duration: 200, // Slightly longer for smoother exit
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(backdropOpacity, {
         toValue: 0,
         duration: 180,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start(() => {
       setShouldRender(false);
@@ -111,7 +111,7 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
             toValue: 0,
             tension: 50,
             friction: 8,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }).start();
         }
       },

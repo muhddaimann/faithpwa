@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Pressable, Animated } from "react-native";
+import { Pressable, Animated, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "react-native-paper";
 import { useDesign } from "../contexts/designContext";
@@ -21,12 +21,12 @@ export default function ScrollTop({
       Animated.timing(opacity, {
         toValue: visible ? 1 : 0,
         duration: 180,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(translateY, {
         toValue: visible ? 0 : -10,
         duration: 180,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start();
   }, [visible]);

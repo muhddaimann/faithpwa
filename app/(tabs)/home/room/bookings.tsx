@@ -6,7 +6,6 @@ import { useDesign } from '../../../../contexts/designContext';
 import { useRoom } from '../../../../hooks/useRoom';
 import Header from '../../../../components/header';
 import NoData from '../../../../components/noData';
-import { BookingItem } from '../../../../contexts/api/room';
 
 export default function Bookings() {
   const theme = useTheme();

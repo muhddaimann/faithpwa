@@ -33,7 +33,7 @@ export function OverlayModal({
         toValue: 1,
         tension: 50,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
   }, [visible]);
@@ -42,7 +42,7 @@ export function OverlayModal({
     Animated.timing(animatedValue, {
       toValue: 0,
       duration: 150,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start(onDismiss);
   };
 

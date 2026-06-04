@@ -47,7 +47,7 @@ export function OverlayConfirm({
         toValue: 1,
         tension: 65,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
   }, [visible]);
@@ -56,7 +56,7 @@ export function OverlayConfirm({
     Animated.timing(animatedValue, {
       toValue: 0,
       duration: 150,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start(callback);
   };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, View, Pressable, Easing } from "react-native";
+import { Animated, View, Pressable, Easing, Platform } from "react-native";
 import { Surface, Text, useTheme, Icon, Portal } from "react-native-paper";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useDesign } from "../../contexts/designContext";
@@ -74,12 +74,12 @@ export function OverlayToast({
         toValue: 0,
         tension: 40,
         friction: 8,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(opacity, {
         toValue: 1,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(progress, {
         toValue: 1,
@@ -99,12 +99,12 @@ export function OverlayToast({
       Animated.timing(translateY, {
         toValue: -100,
         duration: 250,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
       Animated.timing(opacity, {
         toValue: 0,
         duration: 200,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }),
     ]).start(onDismiss);
   };

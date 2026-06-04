@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Animated } from "react-native";
+import { View, Animated, Platform } from "react-native";
 import { ActivityIndicator, Portal, useTheme, Text } from "react-native-paper";
 import { useDesign } from "../../contexts/designContext";
 
@@ -17,7 +17,7 @@ export function OverlayLoader({ visible, message }: Props) {
     Animated.timing(opacity, {
       toValue: visible ? 1 : 0,
       duration: visible ? 200 : 150,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
     }).start();
   }, [visible]);
 
