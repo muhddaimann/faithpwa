@@ -74,12 +74,12 @@ export function OverlaySheet({ visible, title, content, onDismiss }: Props) {
 
   useEffect(() => {
     if (visible) {
+      setShouldRender(true);
       show();
     } else if (shouldRender) {
-      // If prop changed to false but we are still rendering, trigger animation
       hide();
     }
-  }, [visible]);
+  }, [visible, shouldRender]);
 
   const handleManualDismiss = () => {
     // This is for backdrop taps or swipes

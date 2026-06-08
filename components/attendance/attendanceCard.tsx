@@ -3,7 +3,10 @@ import { View } from "react-native";
 import { Text, useTheme, ActivityIndicator } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useDesign } from "../../contexts/designContext";
-import { attendanceStatuses, getStatusFromRecord } from "../../constants/attendance";
+import {
+  attendanceStatuses,
+  getStatusFromRecord,
+} from "../../constants/attendance";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useStaff } from "../../hooks/useStaff";
 
@@ -22,13 +25,15 @@ export default function AttendanceCard() {
 
   if (loading && records.length === 0) {
     return (
-      <View style={{ 
-        height: 220, 
-        backgroundColor: colors.surfaceVariant + '40', 
-        borderRadius: 28, 
-        justifyContent: 'center', 
-        alignItems: 'center' 
-      }}>
+      <View
+        style={{
+          height: 220,
+          backgroundColor: colors.surfaceVariant + "40",
+          borderRadius: 28,
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <ActivityIndicator color={colors.primary} />
       </View>
     );
@@ -44,7 +49,7 @@ export default function AttendanceCard() {
           gap: tokens.spacing.md,
           overflow: "hidden",
           minHeight: 180,
-          justifyContent: 'center'
+          justifyContent: "center",
         }}
       >
         <View
@@ -64,22 +69,39 @@ export default function AttendanceCard() {
         </View>
 
         <View style={{ flex: 1, zIndex: 1 }}>
-          <Text variant="titleLarge" style={{ fontWeight: "800", color: colors.onSurface }}>{dateStr}</Text>
-          <Text variant="bodyLarge" style={{ color: colors.onSurfaceVariant, marginTop: 4 }}>
-            {staff?.department_name || "Management"}
+          <Text
+            variant="titleLarge"
+            style={{ fontWeight: "800", color: colors.onSurface }}
+          >
+            {dateStr}
+          </Text>
+          <Text
+            variant="bodyLarge"
+            style={{ color: colors.onSurfaceVariant, marginTop: 4 }}
+          >
+            {"Management"}
           </Text>
         </View>
-        
-        <View style={{ 
-          backgroundColor: colors.surface + '90', 
-          padding: 16, 
-          borderRadius: 20,
-          zIndex: 1,
-          borderWidth: 1,
-          borderColor: colors.outline + '20'
-        }}>
-          <Text variant="bodyMedium" style={{ color: colors.onSurface, fontWeight: '600', lineHeight: 20 }}>
-            Attendance tracking is not required for your role. Enjoy your day!
+
+        <View
+          style={{
+            backgroundColor: colors.surface + "90",
+            padding: 16,
+            borderRadius: 20,
+            zIndex: 1,
+            borderWidth: 1,
+            borderColor: colors.outline + "20",
+          }}
+        >
+          <Text
+            variant="bodyMedium"
+            style={{
+              color: colors.onSurface,
+              fontWeight: "600",
+              lineHeight: 20,
+            }}
+          >
+            Attendance tracking is not required. Enjoy your day!
           </Text>
         </View>
       </View>
@@ -223,7 +245,9 @@ export default function AttendanceCard() {
                 fontWeight: "800",
               }}
             >
-              {todayRecord?.actual_login || todayRecord?.original_login || "--:--"}
+              {todayRecord?.actual_login ||
+                todayRecord?.original_login ||
+                "--:--"}
             </Text>
           </View>
 
@@ -252,7 +276,9 @@ export default function AttendanceCard() {
                 fontWeight: "800",
               }}
             >
-              {todayRecord?.actual_logout || todayRecord?.original_logout || "--:--"}
+              {todayRecord?.actual_logout ||
+                todayRecord?.original_logout ||
+                "--:--"}
             </Text>
           </View>
         </View>
