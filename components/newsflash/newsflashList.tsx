@@ -1,21 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { ScrollView, TouchableOpacity, View } from "react-native";
-import { Text, useTheme, Divider } from "react-native-paper";
+import { Text, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { design } from "../../constants/design";
-import { useOverlay } from "../../contexts/overlayContext";
 import {
   NewsflashPriority,
   newsflashFilters,
   newsflashPriorities,
 } from "../../constants/newsflash";
 import { useNewsflash } from "../../hooks/useNewsflash";
-import { type Broadcast } from "../../contexts/api/broadcast";
+import { formatNewsDate } from "../../helpers/newsflash";
 
 export default function NewsflashList() {
   const theme = useTheme();
-  const { spacing, radii } = design;
-  const { broadcasts, loading, showDetails } = useNewsflash();
+  const { spacing, radii, typography } = design;
+  const { broadcasts, loading, showDetails, isAcknowledged } = useNewsflash();
 
   const [activeFilter, setActiveFilter] = useState<NewsflashPriority | "All">(
     "All"
@@ -93,107 +92,133 @@ export default function NewsflashList() {
         {filteredNews.map((item, index) => {
           const priorityKey = normalizePriority(item.BroadcastPriority);
           const priority = newsflashPriorities[priorityKey];
+          const acknowledged = isAcknowledged(item);
 
           return (
             <TouchableOpacity
-              key={`${item.broadcast_id}-${index}`}
+              key={`${item.ID}-${index}`}
               activeOpacity={0.7}
               onPress={() => showDetails(item)}
               style={{
-                borderRadius: 28,
-                padding: spacing.lg,
+                flexDirection: "row",
+                borderRadius: radii.xl,
                 backgroundColor: theme.colors.surface,
-                elevation: 1,
+                borderWidth: 1,
+                borderColor: `${theme.colors.outline}1A`,
                 overflow: "hidden",
-                gap: spacing.xs,
               }}
             >
-              {/* Background Decorative Icon */}
-              <View
-                style={{
-                  position: "absolute",
-                  right: -15,
-                  top: -15,
-                  opacity: 0.06,
-                  transform: [{ rotate: "-15deg" }],
-                }}
-              >
-                <MaterialCommunityIcons
-                  name={priority.icon as any}
-                  size={110}
-                  color={priority.color}
-                />
-              </View>
+              {/* Priority accent rail */}
+              <View style={{ width: 4, backgroundColor: priority.color }} />
 
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                }}
-              >
+              <View style={{ flex: 1, padding: spacing.md, gap: spacing.xs }}>
+                {/* Header: priority + meta */}
                 <View
                   style={{
-                    paddingHorizontal: 10,
-                    paddingVertical: 4,
-                    borderRadius: radii.full,
-                    backgroundColor: priority.color + "15",
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 6,
+                    justifyContent: "space-between",
                   }}
                 >
                   <View
                     style={{
-                      width: 6,
-                      height: 6,
-                      borderRadius: 3,
-                      backgroundColor: priority.color,
-                    }}
-                  />
-                  <Text
-                    style={{
-                      fontSize: 10,
-                      fontWeight: "800",
-                      color: priority.color,
-                      letterSpacing: 0.5,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
                     }}
                   >
-                    {item.BroadcastPriority.toUpperCase()}
+                    <MaterialCommunityIcons
+                      name={priority.icon as any}
+                      size={14}
+                      color={priority.color}
+                    />
+                    <Text
+                      style={{
+                        fontSize: typography.sizes.xs,
+                        fontWeight: "800",
+                        color: priority.color,
+                        letterSpacing: 0.5,
+                      }}
+                    >
+                      {priority.label.toUpperCase()}
+                    </Text>
+                  </View>
+
+                  <Text
+                    style={{
+                      fontSize: typography.sizes.xs,
+                      color: theme.colors.onSurfaceVariant,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {formatNewsDate(item.CreatedDateTime)}
                   </Text>
                 </View>
 
+                {/* Title */}
                 <Text
+                  numberOfLines={2}
                   style={{
-                    fontSize: 11,
-                    color: theme.colors.onSurfaceVariant,
-                    fontWeight: "600",
-                  }}
-                >
-                  {new Date(item.CreatedDateTime).toLocaleDateString()}
-                </Text>
-              </View>
-
-              <View style={{ marginTop: spacing.xs }}>
-                <Text
-                  style={{
-                    fontSize: 18,
-                    fontWeight: "800",
+                    fontSize: typography.sizes.sm,
+                    fontWeight: "700",
+                    lineHeight: 20,
                     color: theme.colors.onSurface,
                   }}
                 >
                   {item.NewsName}
                 </Text>
-                <Text
+
+                {/* Footer: type + acknowledge indicator */}
+                <View
                   style={{
-                    fontSize: 13,
-                    color: theme.colors.onSurfaceVariant,
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
                     marginTop: 2,
-                    fontWeight: "600",
                   }}
                 >
-                  {item.BroadcastType}
-                </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{
+                      flex: 1,
+                      fontSize: typography.sizes.xs,
+                      color: theme.colors.onSurfaceVariant,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {item.BroadcastType}
+                  </Text>
+
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 4,
+                      paddingHorizontal: 8,
+                      paddingVertical: 3,
+                      borderRadius: radii.full,
+                      backgroundColor: acknowledged
+                        ? "#22C55E18"
+                        : `${priority.color}14`,
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={acknowledged ? "check-circle" : "circle-medium"}
+                      size={13}
+                      color={acknowledged ? "#22C55E" : priority.color}
+                    />
+                    <Text
+                      style={{
+                        fontSize: 10,
+                        fontWeight: "800",
+                        letterSpacing: 0.4,
+                        color: acknowledged ? "#22C55E" : priority.color,
+                      }}
+                    >
+                      {acknowledged ? "ACKNOWLEDGED" : "UNREAD"}
+                    </Text>
+                  </View>
+                </View>
               </View>
             </TouchableOpacity>
           );

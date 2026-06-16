@@ -1,17 +1,19 @@
-import { useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { View, useWindowDimensions } from 'react-native';
-import { Text, useTheme, Divider, Button } from 'react-native-paper';
+import { Text, useTheme, Divider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import RenderHTML from 'react-native-render-html';
 import { useBroadcastStore } from '../contexts/api/broadcastStore';
 import { useOverlay } from '../contexts/overlayContext';
 import { newsflashPriorities } from '../constants/newsflash';
 import { type Broadcast } from '../contexts/api/broadcast';
+import AcknowledgeButton from '../components/newsflash/acknowledgeButton';
+import { formatNewsDate } from '../helpers/newsflash';
 
 export const useNewsflash = (limit?: number) => {
   const theme = useTheme();
   const { width } = useWindowDimensions();
-  const { showSheet, hideSheet, toast } = useOverlay();
+  const { showSheet, hideSheet, toast, showLoader, hideLoader } = useOverlay();
   const {
     broadcasts,
     loading,
@@ -20,6 +22,7 @@ export const useNewsflash = (limit?: number) => {
     fetchBroadcasts,
     setBroadcast,
     clearSelected,
+    acknowledge,
   } = useBroadcastStore();
 
   // Fetch broadcasts on mount if list is empty
@@ -29,14 +32,27 @@ export const useNewsflash = (limit?: number) => {
     }
   }, [broadcasts.length, loading, error, fetchBroadcasts]);
 
-  const handleAcknowledge = async (id: number) => {
-    // In a real app, you would call an API here
-    // await acknowledgeBroadcast(id);
-    hideSheet();
-    toast({
-      message: 'Announcement acknowledged',
-      variant: 'success',
-    });
+  const isAcknowledged = useCallback(
+    (item: Broadcast) => item.Acknowledged === 1,
+    [],
+  );
+
+  const handleAcknowledge = async (item: Broadcast) => {
+    showLoader('Acknowledging...');
+    const ok = await acknowledge(item.ID);
+    hideLoader();
+    if (ok) {
+      hideSheet();
+      toast({
+        message: 'Announcement acknowledged',
+        variant: 'success',
+      });
+    } else {
+      toast({
+        message: 'Could not acknowledge. Please try again.',
+        variant: 'error',
+      });
+    }
   };
 
   const normalizePriority = (p?: string): keyof typeof newsflashPriorities => {
@@ -54,7 +70,7 @@ export const useNewsflash = (limit?: number) => {
 
     showSheet({
       content: (
-        <View key={`broadcast-detail-${item.broadcast_id}`} style={{ gap: 20, paddingBottom: 20 }}>
+        <View key={`broadcast-detail-${item.ID}`} style={{ gap: 20, paddingBottom: 20 }}>
           <View
             key="detail-header"
             style={{
@@ -138,20 +154,16 @@ export const useNewsflash = (limit?: number) => {
                 POSTED
               </Text>
               <Text variant="bodyMedium">
-                {item.CreatedDateTime ? new Date(item.CreatedDateTime).toLocaleDateString() : 'N/A'}
+                {formatNewsDate(item.CreatedDateTime, 'N/A')}
               </Text>
             </View>
           </View>
 
-          <Button 
+          <AcknowledgeButton
             key="detail-action"
-            mode="contained" 
-            onPress={() => handleAcknowledge(item.broadcast_id)}
-            style={{ marginTop: 8, borderRadius: 12 }}
-            contentStyle={{ height: 48 }}
-          >
-            ACKNOWLEDGE MEMO
-          </Button>
+            acknowledged={isAcknowledged(item)}
+            onAcknowledge={() => handleAcknowledge(item)}
+          />
         </View>
       ),
     });
@@ -175,6 +187,7 @@ export const useNewsflash = (limit?: number) => {
     selectNews: setBroadcast,
     closeNews: clearSelected,
     showDetails,
+    isAcknowledged,
     hasNews: broadcasts.length > 0,
   };
 };

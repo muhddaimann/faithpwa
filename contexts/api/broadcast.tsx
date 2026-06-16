@@ -1,7 +1,7 @@
 import api from './api';
 
 export interface Broadcast {
-  broadcast_id: number;
+  ID: number;
   BroadcastType: string;
   BroadcastPriority: string;
   NewsName: string;
@@ -11,6 +11,7 @@ export interface Broadcast {
   Content: string;
   CreatedBy: string;
   CreatedDateTime: string;
+  Acknowledged: number;
 }
 
 export interface ApiResponse<T> {
@@ -31,6 +32,20 @@ export const getActiveBroadcasts = async (): Promise<ApiResponse<Broadcast[]> | 
     }
   } catch (error) {
     console.error('Error fetching active broadcasts:', error);
+    return null;
+  }
+};
+
+export const acknowledgeBroadcast = async (
+  id: number,
+): Promise<ApiResponse<null> | null> => {
+  try {
+    const response = await api.post<ApiResponse<null>>('/broadcast.php', {
+      broadcast_id: id,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error acknowledging broadcast:', error);
     return null;
   }
 };

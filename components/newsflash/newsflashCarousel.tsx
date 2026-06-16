@@ -13,6 +13,7 @@ import { useRouter } from "expo-router";
 import { useDesign } from "../../contexts/designContext";
 import { newsflashPriorities } from "../../constants/newsflash";
 import { useNewsflash } from "../../hooks/useNewsflash";
+import { formatNewsDate } from "../../helpers/newsflash";
 
 const { width } = Dimensions.get("window");
 
@@ -24,7 +25,7 @@ export default function NewsflashCarousel() {
   const { colors } = useTheme();
   const tokens = useDesign();
   const router = useRouter();
-  const { broadcasts, loading, showDetails } = useNewsflash(3);
+  const { broadcasts, loading, showDetails, isAcknowledged } = useNewsflash(3);
 
   const normalizePriority = (p?: string): keyof typeof newsflashPriorities => {
     if (!p) return "Normal";
@@ -38,7 +39,6 @@ export default function NewsflashCarousel() {
   const translateX = useRef(new Animated.Value(0)).current;
   const progress = useRef(new Animated.Value(0)).current;
   const [activeIndex, setActiveIndex] = useState(0);
-  const [acknowledgedIds, setAcknowledgedIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (broadcasts.length === 0) return;
@@ -91,18 +91,13 @@ export default function NewsflashCarousel() {
           {broadcasts.map((item, index) => {
             const priorityKey = normalizePriority(item.BroadcastPriority);
             const priority = newsflashPriorities[priorityKey];
-            const acknowledged = acknowledgedIds.includes(item.broadcast_id);
+            const acknowledged = isAcknowledged(item);
             const isActive = index === activeIndex;
 
             return (
               <Pressable
-                key={`${item.broadcast_id}-${index}`}
-                onPress={() => {
-                  showDetails(item);
-                  if (!acknowledged) {
-                    setAcknowledgedIds((prev) => [...prev, item.broadcast_id]);
-                  }
-                }}
+                key={`${item.ID}-${index}`}
+                onPress={() => showDetails(item)}
                 style={({ pressed }) => ({
                   width: CARD_WIDTH,
                   opacity: pressed ? 0.92 : 1,
@@ -227,7 +222,7 @@ export default function NewsflashCarousel() {
                         color: colors.onSurfaceVariant,
                       }}
                     >
-                      {acknowledged ? "Acknowledged" : new Date(item.CreatedDateTime).toLocaleDateString()}
+                      {acknowledged ? "Acknowledged" : formatNewsDate(item.CreatedDateTime)}
                     </Text>
 
                     <MaterialCommunityIcons

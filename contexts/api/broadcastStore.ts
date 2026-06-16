@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { getActiveBroadcasts, type Broadcast } from './broadcast';
+import { getActiveBroadcasts, acknowledgeBroadcast, type Broadcast } from './broadcast';
 
 interface BroadcastStore {
   broadcasts: Broadcast[];
@@ -10,6 +10,7 @@ interface BroadcastStore {
   setBroadcast: (broadcast: Broadcast) => void;
   clearSelected: () => void;
   clearAll: () => void;
+  acknowledge: (id: number) => Promise<boolean>;
 }
 
 export const useBroadcastStore = create<BroadcastStore>((set) => ({
@@ -37,4 +38,17 @@ export const useBroadcastStore = create<BroadcastStore>((set) => ({
   setBroadcast: (broadcast) => set({ selectedBroadcast: broadcast }),
   clearSelected: () => set({ selectedBroadcast: null }),
   clearAll: () => set({ broadcasts: [], selectedBroadcast: null, error: null, loading: false }),
+
+  acknowledge: async (id) => {
+    const response = await acknowledgeBroadcast(id);
+    const ok = !!response && response.status === 'success';
+    if (ok) {
+      set((state) => ({
+        broadcasts: state.broadcasts.map((b) =>
+          b.ID === id ? { ...b, Acknowledged: 1 } : b,
+        ),
+      }));
+    }
+    return ok;
+  },
 }));
