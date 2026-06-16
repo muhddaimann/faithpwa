@@ -9,12 +9,12 @@ import {
 } from "../../constants/attendance";
 import { useAttendance } from "../../hooks/useAttendance";
 import { useStaff } from "../../hooks/useStaff";
-import { formatFullDate, formatTime } from "../../helpers/attendance";
+import { formatFullDate, buildAttendanceDetail } from "../../helpers/attendance";
 
 export default function AttendanceCard() {
   const { colors } = useTheme();
   const tokens = useDesign();
-  const { records, stats, loading, noRecords } = useAttendance();
+  const { records, stats, loading, noRecords, describeStatus, getHoliday } = useAttendance();
   const { staff } = useStaff();
 
   const dateStr = formatFullDate(new Date());
@@ -105,8 +105,12 @@ export default function AttendanceCard() {
   }
 
   const todayRecord = stats.todayRecord;
-  const statusKey = getStatusFromRecord(todayRecord);
+  const holiday = getHoliday(todayRecord?.schedule_date);
+  const statusKey = holiday ? "publicHoliday" : getStatusFromRecord(todayRecord);
   const status = attendanceStatuses[statusKey];
+  const detail = buildAttendanceDetail(todayRecord);
+  const statusLabel = describeStatus(todayRecord) || status.label;
+  const statusMessage = holiday ? holiday.description : status.message;
 
   return (
     <View
@@ -176,7 +180,7 @@ export default function AttendanceCard() {
               marginTop: 4,
             }}
           >
-            {staff?.department_name || "Digital Project"}
+            {staff?.designation_name || "Digital Project"}
           </Text>
         </View>
 
@@ -204,7 +208,7 @@ export default function AttendanceCard() {
               fontWeight: "700",
             }}
           >
-            {status.label}
+            {statusLabel}
           </Text>
         </View>
       </View>
@@ -216,67 +220,39 @@ export default function AttendanceCard() {
             gap: tokens.spacing.md,
           }}
         >
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(255,255,255,0.08)",
-              borderRadius: tokens.radii.xl,
-              padding: tokens.spacing.md,
-              gap: 4,
-            }}
-          >
-            <Text
-              variant="bodySmall"
+          {[detail.checkIn, detail.checkOut].map((metric, idx) => (
+            <View
+              key={idx}
               style={{
-                color: "rgba(255,255,255,0.65)",
+                flex: 1,
+                backgroundColor: "rgba(255,255,255,0.08)",
+                borderRadius: tokens.radii.xl,
+                padding: tokens.spacing.md,
+                gap: 4,
               }}
             >
-              Check In
-            </Text>
+              <Text
+                variant="bodySmall"
+                style={{ color: "rgba(255,255,255,0.65)" }}
+              >
+                {metric.label}
+              </Text>
 
-            <Text
-              variant="titleMedium"
-              style={{
-                color: colors.onPrimary,
-                fontWeight: "800",
-              }}
-            >
-              {formatTime(
-                todayRecord?.actual_login || todayRecord?.original_login,
-              )}
-            </Text>
-          </View>
+              <Text
+                variant="titleMedium"
+                style={{ color: colors.onPrimary, fontWeight: "800" }}
+              >
+                {metric.actual}
+              </Text>
 
-          <View
-            style={{
-              flex: 1,
-              backgroundColor: "rgba(255,255,255,0.08)",
-              borderRadius: tokens.radii.xl,
-              padding: tokens.spacing.md,
-              gap: 4,
-            }}
-          >
-            <Text
-              variant="bodySmall"
-              style={{
-                color: "rgba(255,255,255,0.65)",
-              }}
-            >
-              Check Out
-            </Text>
-
-            <Text
-              variant="titleMedium"
-              style={{
-                color: colors.onPrimary,
-                fontWeight: "800",
-              }}
-            >
-              {formatTime(
-                todayRecord?.actual_logout || todayRecord?.original_logout,
-              )}
-            </Text>
-          </View>
+              <Text
+                variant="bodySmall"
+                style={{ color: "rgba(255,255,255,0.5)" }}
+              >
+                {metric.state === "recorded" ? metric.note : `Scheduled · ${metric.scheduled}`}
+              </Text>
+            </View>
+          ))}
         </View>
       ) : (
         <View
@@ -293,7 +269,7 @@ export default function AttendanceCard() {
               lineHeight: 24,
             }}
           >
-            {status.message || "No shift scheduled for today."}
+            {statusMessage || "No shift scheduled for today."}
           </Text>
         </View>
       )}

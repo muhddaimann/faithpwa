@@ -7,47 +7,58 @@ import { useAttendance } from "../../hooks/useAttendance";
 import { getStatusFromRecord, attendanceStatuses } from "../../constants/attendance";
 import {
   getDateParts,
-  formatTime,
-  formatDuration,
-  formatWorkedHours,
   isToday,
   formatMonthYear,
   getMonthMeta,
   getWeekDates,
   toDateKey,
+  buildAttendanceDetail,
+  type ClockMetric,
+  type MetricTone,
 } from "../../helpers/attendance";
 import NoData from "../noData";
 
+const toneColor = (tone: MetricTone): string => {
+  switch (tone) {
+    case "positive":
+      return "#4ADE80";
+    case "warning":
+      return "#FBBF24";
+    case "negative":
+      return "#F87171";
+    default:
+      return "rgba(255,255,255,0.6)";
+  }
+};
+
 export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly" }) {
   const theme = useTheme();
-  const { records, loading, noRecords } = useAttendance();
+  const { records, loading, noRecords, describeStatus, getHoliday } = useAttendance();
   const { spacing, radii, elevation } = design;
 
   const data = useMemo(() => {
     // Map API records to UI format
     return records.map(record => {
       const parts = getDateParts(record.schedule_date);
-      const statusKey = getStatusFromRecord(record);
+      const holiday = getHoliday(record.schedule_date);
+      const statusKey = holiday ? "publicHoliday" : getStatusFromRecord(record);
       const statusInfo = attendanceStatuses[statusKey];
-      const checkInRaw = record.actual_login || record.original_login;
-      const checkOutRaw = record.actual_logout || record.original_logout;
 
       return {
         ...record,
         date: parts?.day ?? 0,
         month: parts?.month ?? "",
         day: parts?.weekday ?? "",
-        displayStatus: statusInfo.label,
+        displayStatus: describeStatus(record),
         color: statusInfo.dotColor,
         cardColor: statusInfo.cardColor,
         icon: statusInfo.icon,
-        checkIn: formatTime(checkInRaw, "--"),
-        checkOut: formatTime(checkOutRaw, "--"),
-        lateBy: formatDuration(record.login_difference, "--"),
-        workingHours: formatWorkedHours(checkInRaw, checkOutRaw, "--"),
+        showShift: statusInfo.showShift,
+        message: holiday ? holiday.description : statusInfo.message,
+        detail: buildAttendanceDetail(record),
       };
     }).sort((a, b) => new Date(a.schedule_date).getTime() - new Date(b.schedule_date).getTime());
-  }, [records]);
+  }, [records, describeStatus, getHoliday]);
 
   const recordByDate = useMemo(() => {
     const map = new Map<string, (typeof data)[number]>();
@@ -150,31 +161,94 @@ export default function AttendanceOverview({ view }: { view: "Weekly" | "Monthly
           </View>
         </View>
 
-        <View style={{ flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs }}>
-          {[
-            { label: "Check In", value: selected.checkIn },
-            { label: "Check Out", value: selected.checkOut },
-            { label: "Hours", value: selected.workingHours },
-          ].map((item, idx) => (
+        {selected.showShift ? (
+          <View style={{ gap: spacing.sm, marginTop: spacing.xs }}>
+            <View style={{ flexDirection: "row", gap: spacing.sm }}>
+              {[selected.detail.checkIn, selected.detail.checkOut].map(
+                (metric: ClockMetric, idx: number) => (
+                  <View
+                    key={idx}
+                    style={{
+                      flex: 1,
+                      backgroundColor: "rgba(255,255,255,0.1)",
+                      borderRadius: radii.xl,
+                      padding: spacing.md,
+                      gap: 6,
+                    }}
+                  >
+                    <Text variant="bodySmall" style={{ color: "rgba(255,255,255,0.7)" }}>
+                      {metric.label}
+                    </Text>
+                    <Text
+                      variant="headlineSmall"
+                      style={{ color: "#FFF", fontWeight: "900" }}
+                    >
+                      {metric.actual}
+                    </Text>
+                    <Text variant="bodySmall" style={{ color: "rgba(255,255,255,0.55)" }}>
+                      Scheduled · {metric.scheduled}
+                    </Text>
+                    <View
+                      style={{
+                        alignSelf: "flex-start",
+                        marginTop: 2,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                        borderRadius: radii.full,
+                        backgroundColor:
+                          metric.tone === "neutral"
+                            ? "rgba(255,255,255,0.08)"
+                            : `${toneColor(metric.tone)}26`,
+                      }}
+                    >
+                      <Text
+                        variant="labelSmall"
+                        style={{ color: toneColor(metric.tone), fontWeight: "800" }}
+                      >
+                        {metric.note}
+                      </Text>
+                    </View>
+                  </View>
+                ),
+              )}
+            </View>
+
             <View
-              key={idx}
               style={{
-                flex: 1,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
                 backgroundColor: "rgba(255,255,255,0.1)",
                 borderRadius: radii.xl,
-                padding: spacing.md,
-                gap: 4,
+                paddingHorizontal: spacing.md,
+                paddingVertical: spacing.sm,
               }}
             >
-              <Text variant="bodySmall" style={{ color: "rgba(255,255,255,0.7)" }}>
-                {item.label}
-              </Text>
-              <Text variant="titleSmall" style={{ color: "#FFF", fontWeight: "800" }}>
-                {item.value}
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <MaterialCommunityIcons name="timer-sand" size={16} color="#FFF" />
+                <Text variant="bodyMedium" style={{ color: "rgba(255,255,255,0.8)", fontWeight: "600" }}>
+                  Worked Hours
+                </Text>
+              </View>
+              <Text variant="titleMedium" style={{ color: "#FFF", fontWeight: "900" }}>
+                {selected.detail.workedHours}
               </Text>
             </View>
-          ))}
-        </View>
+          </View>
+        ) : (
+          <View
+            style={{
+              backgroundColor: "rgba(255,255,255,0.1)",
+              borderRadius: radii.xl,
+              padding: spacing.lg,
+              marginTop: spacing.xs,
+            }}
+          >
+            <Text variant="bodyLarge" style={{ color: "#FFF", lineHeight: 24 }}>
+              {selected.message || "No shift scheduled for this day."}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* Bottom Section - Selection */}
