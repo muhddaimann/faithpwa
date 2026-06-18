@@ -122,7 +122,7 @@ export default function Home() {
         scrollEventThrottle={16}
         contentContainerStyle={{
           paddingTop: tokens.spacing.md,
-          paddingBottom: tokens.spacing["3xl"],
+          paddingBottom: tokens.spacing["3xl"]*2,
           paddingHorizontal: tokens.spacing.lg,
           gap: tokens.spacing.md,
         }}

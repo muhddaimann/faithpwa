@@ -20,22 +20,6 @@ export default function SessionFooter() {
         gap: 6,
       }}
     >
-      <View
-        style={{
-          width: 32,
-          height: 4,
-          borderRadius: 2,
-          backgroundColor: theme.colors.outlineVariant,
-          marginBottom: 4,
-        }}
-      />
-
-      <MaterialCommunityIcons
-        name="shield-check-outline"
-        size={16}
-        color={theme.colors.onSurfaceVariant}
-      />
-
       {lastLogin ? (
         <>
           <Text

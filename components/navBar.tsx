@@ -133,7 +133,7 @@ export function NavBar() {
       renderToHardwareTextureAndroid
       style={{
         position: "absolute",
-        bottom: tokens.spacing.sm,
+        bottom: tokens.spacing["2xl"],
         left: tokens.spacing["2xl"],
         right: tokens.spacing["2xl"],
         flexDirection: "row",
