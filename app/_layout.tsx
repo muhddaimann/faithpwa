@@ -6,7 +6,6 @@ import { AuthProvider, useAuth } from "../contexts/authContext";
 import { TokenProvider } from "../contexts/tokenContext";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import Head from "expo-router/head";
 import {
   useFonts,
   SourceSansPro_400Regular,
@@ -149,17 +148,6 @@ function AppContent({ fontsLoaded }: { fontsLoaded: boolean }) {
         overscrollBehavior: "none",
       }}
     >
-      <Head>
-        <meta
-          name="viewport"
-          content="width=device-width, initial-scale=1, viewport-fit=cover"
-        />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta
-          name="apple-mobile-web-app-status-bar-style"
-          content="black-translucent"
-        />
-      </Head>
       <StatusBar style={theme.dark ? "light" : "dark"} />
       <SafeAreaView
         style={{
