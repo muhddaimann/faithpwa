@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useToken } from './tokenContext';
 import { useOverlay } from './overlayContext';
-import { login as apiLogin } from './api/auth';
-import { setSessionExpiredHandler, resetSessionExpired } from './api/session';
+import { login as apiLogin, revokeSession } from './api/auth';
+import { setSessionExpiredHandler, resetSessionExpired, markSessionExpiredHandled } from './api/session';
 import { useStaffStore } from './api/staffStore';
 import { useBroadcastStore } from './api/broadcastStore';
 import { useLeaveStore } from './api/leaveStore';
@@ -123,7 +123,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const performSignOut = useCallback(async () => {
     showLoader("Logging you out...");
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Suppress our own logout-call 401 from re-firing the kick-out path,
+      // revoke the session server-side while the token is still valid, then
+      // clear locally. Best-effort — local sign-out happens regardless.
+      markSessionExpiredHandled();
+      await revokeSession();
       await deleteToken();
       setUser(null);
       clearAllStores();

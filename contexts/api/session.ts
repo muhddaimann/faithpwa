@@ -23,3 +23,9 @@ export const notifySessionExpired = () => {
 export const resetSessionExpired = () => {
   triggered = false;
 };
+
+// Pre-empt the guard during an intentional logout so its own revoke-call 401
+// doesn't re-fire the kick-out path. Re-armed by resetSessionExpired() on login.
+export const markSessionExpiredHandled = () => {
+  triggered = true;
+};

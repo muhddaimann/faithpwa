@@ -11,6 +11,7 @@ const TokenContext = createContext<TokenContextType | undefined>(undefined);
 
 const TOKEN_KEY = 'user_token';
 const EXPIRATION_KEY = `${TOKEN_KEY}_expiration`;
+const SESSION_KEY = `${TOKEN_KEY}_session`;
 
 export const useToken = () => {
   const context = useContext(TokenContext);
@@ -63,9 +64,27 @@ export const storeToken = async (token: string, expiration?: number) => {
   }
 };
 
+// The server-side session id (jti) returned at login — identifies "this device".
+export const storeSessionId = async (sessionId: string) => {
+  try {
+    await AsyncStorage.setItem(SESSION_KEY, sessionId);
+  } catch (e) {
+    console.error('Failed to save session id', e);
+  }
+};
+
+export const getStoredSessionId = async (): Promise<string | null> => {
+  try {
+    return await AsyncStorage.getItem(SESSION_KEY);
+  } catch (e) {
+    console.error('Failed to get session id', e);
+    return null;
+  }
+};
+
 export const removeToken = async () => {
   try {
-    await AsyncStorage.multiRemove([TOKEN_KEY, EXPIRATION_KEY]);
+    await AsyncStorage.multiRemove([TOKEN_KEY, EXPIRATION_KEY, SESSION_KEY]);
   } catch (e) {
     console.error('Failed to delete token', e);
   }

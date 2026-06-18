@@ -20,6 +20,7 @@ import PickerModal from "../../../components/pickerModal";
 import AttendanceCard from "../../../components/attendance/attendanceCard";
 import NewsflashCarousel from "../../../components/newsflash/newsflashCarousel";
 import RowTwo from "../../../components/rowtwo";
+import SessionFooter from "../../../components/sessionFooter";
 import { useLeave } from "../../../hooks/useLeave";
 import { useRoom } from "../../../hooks/useRoom";
 
@@ -184,6 +185,8 @@ export default function Home() {
             color: "#8B5CF6",
           }}
         />
+
+        <SessionFooter />
       </ScrollView>
 
       <ScrollTop visible={showScrollTop} onPress={scrollToTop} />
