@@ -9,5 +9,5 @@ services:
     ports:
       - "${PORT:-8080}:80"
     environment:
-      BACKEND_URL: ${BACKEND_URL}
+      BACKEND_URL: ${BACKEND_URL:-https://endpoint.daythree.ai/faithMobile/routes}
     restart: unless-stopped

@@ -18,6 +18,10 @@ RUN npx expo export --platform web --output-dir dist
 # ===== Stage 2: serve the bundle with nginx =====
 FROM nginx:1.27-alpine
 
+# Default backend; override at runtime with -e BACKEND_URL=... or compose env.
+# Ensures envsubst always has a value so nginx never starts with an empty proxy.
+ENV BACKEND_URL=https://endpoint.daythree.ai/faithMobile/routes
+
 # nginx renders this template (envsubst) into a real config at startup
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 
