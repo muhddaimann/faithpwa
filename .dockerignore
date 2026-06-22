@@ -1,0 +1,16 @@
+node_modules
+dist
+web-build
+.expo
+.git
+.gitignore
+.env
+.env*.local
+.vscode
+.idea
+.DS_Store
+npm-debug.*
+*.log
+Dockerfile
+.dockerignore
+docs

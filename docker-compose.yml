@@ -1,0 +1,13 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-/api}
+    image: faithpwa:latest
+    container_name: faithpwa
+    ports:
+      - "${PORT:-8080}:80"
+    environment:
+      BACKEND_URL: ${BACKEND_URL}
+    restart: unless-stopped
